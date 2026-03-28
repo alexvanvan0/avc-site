@@ -768,6 +768,48 @@
               <div class="pp-card"><div class="pp-cl">Season Stats</div><div class="pp-sr"><span class="pp-sk">Kill %</span><span class="pp-sv">63.4%</span></div><div class="pp-sr"><span class="pp-sk">Block success</span><span class="pp-sv">41.2%</span></div><div class="pp-sr"><span class="pp-sk">Reception acc.</span><span class="pp-sv">78.1%</span></div><div class="pp-sr"><span class="pp-sk">Errors / set</span><span class="pp-sv">1.4</span></div></div>
               <div class="pp-card"><div class="pp-cl">This Week</div><div class="pp-sr"><span class="pp-sk">Avg readiness</span><span class="pp-sv">8.6</span></div><div class="pp-sr"><span class="pp-sk">Sessions</span><span class="pp-sv">4 / 4</span></div><div class="pp-sr"><span class="pp-sk">Sleep avg</span><span class="pp-sv">7.4h</span></div><div class="pp-sr"><span class="pp-sk">Injury flags</span><span class="pp-sv">None</span></div></div>
             </div>
+            <div class="pp-card" style="margin-bottom:12px;">
+              <div class="pp-cl" style="margin-bottom:10px;">Blocking — Last 10 Matches</div>
+              <div style="display:flex;gap:14px;margin-bottom:8px;">
+                <div style="display:flex;align-items:center;gap:5px;font-size:9px;color:var(--dim);"><span style="width:12px;height:2px;background:var(--white);display:inline-block;border-radius:1px;"></span>Total blocks</div>
+                <div style="display:flex;align-items:center;gap:5px;font-size:9px;color:var(--dim);"><span style="width:12px;height:2px;background:var(--b3);display:inline-block;border-radius:1px;"></span>Blocks / set</div>
+              </div>
+              <svg viewBox="0 0 320 100" style="width:100%;height:auto;" xmlns="http://www.w3.org/2000/svg">
+                <!-- grid lines -->
+                <line x1="30" y1="10" x2="310" y2="10" stroke="#1e1e1e" stroke-width="0.5"/>
+                <line x1="30" y1="32" x2="310" y2="32" stroke="#1e1e1e" stroke-width="0.5"/>
+                <line x1="30" y1="55" x2="310" y2="55" stroke="#1e1e1e" stroke-width="0.5"/>
+                <line x1="30" y1="78" x2="310" y2="78" stroke="#1e1e1e" stroke-width="0.5"/>
+                <!-- Y axis labels — total blocks (left) -->
+                <text x="24" y="13" fill="#484848" font-size="7" text-anchor="end" font-family="JetBrains Mono">8</text>
+                <text x="24" y="35" fill="#484848" font-size="7" text-anchor="end" font-family="JetBrains Mono">6</text>
+                <text x="24" y="58" fill="#484848" font-size="7" text-anchor="end" font-family="JetBrains Mono">4</text>
+                <text x="24" y="81" fill="#484848" font-size="7" text-anchor="end" font-family="JetBrains Mono">2</text>
+                <!-- X axis labels — match numbers -->
+                <text x="42" y="95" fill="#484848" font-size="6" text-anchor="middle" font-family="JetBrains Mono">M1</text>
+                <text x="73" y="95" fill="#484848" font-size="6" text-anchor="middle" font-family="JetBrains Mono">M2</text>
+                <text x="104" y="95" fill="#484848" font-size="6" text-anchor="middle" font-family="JetBrains Mono">M3</text>
+                <text x="135" y="95" fill="#484848" font-size="6" text-anchor="middle" font-family="JetBrains Mono">M4</text>
+                <text x="166" y="95" fill="#484848" font-size="6" text-anchor="middle" font-family="JetBrains Mono">M5</text>
+                <text x="197" y="95" fill="#484848" font-size="6" text-anchor="middle" font-family="JetBrains Mono">M6</text>
+                <text x="228" y="95" fill="#484848" font-size="6" text-anchor="middle" font-family="JetBrains Mono">M7</text>
+                <text x="259" y="95" fill="#484848" font-size="6" text-anchor="middle" font-family="JetBrains Mono">M8</text>
+                <text x="290" y="95" fill="#484848" font-size="6" text-anchor="middle" font-family="JetBrains Mono">M9</text>
+                <text x="310" y="95" fill="#484848" font-size="6" text-anchor="middle" font-family="JetBrains Mono">M10</text>
+                <!-- Total blocks line: 5,3,6,4,7,5,6,8,5,7 -->
+                <polyline points="42,44 73,66 104,32 135,55 166,21 197,44 228,32 259,10 290,44 310,21" fill="none" stroke="#f5f5f5" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+                <!-- dots for total blocks -->
+                <circle cx="42" cy="44" r="2.5" fill="#f5f5f5"/><circle cx="73" cy="66" r="2.5" fill="#f5f5f5"/><circle cx="104" cy="32" r="2.5" fill="#f5f5f5"/><circle cx="135" cy="55" r="2.5" fill="#f5f5f5"/><circle cx="166" cy="21" r="2.5" fill="#f5f5f5"/><circle cx="197" cy="44" r="2.5" fill="#f5f5f5"/><circle cx="228" cy="32" r="2.5" fill="#f5f5f5"/><circle cx="259" cy="10" r="2.5" fill="#f5f5f5"/><circle cx="290" cy="44" r="2.5" fill="#f5f5f5"/><circle cx="310" cy="21" r="2.5" fill="#f5f5f5"/>
+                <!-- Blocks per set line: 1.2,0.8,1.5,1.0,1.8,1.3,1.4,2.0,1.2,1.6 — scaled to same grid (2.0=10, 0=87) -->
+                <polyline points="42,64 73,72 104,57 135,68 166,50 197,62 228,59 259,45 290,64 310,53" fill="none" stroke="#333" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4 2"/>
+                <!-- dots for blocks per set -->
+                <circle cx="42" cy="64" r="2" fill="#333"/><circle cx="73" cy="72" r="2" fill="#333"/><circle cx="104" cy="57" r="2" fill="#333"/><circle cx="135" cy="68" r="2" fill="#333"/><circle cx="166" cy="50" r="2" fill="#333"/><circle cx="197" cy="62" r="2" fill="#333"/><circle cx="228" cy="59" r="2" fill="#333"/><circle cx="259" cy="45" r="2" fill="#333"/><circle cx="290" cy="64" r="2" fill="#333"/><circle cx="310" cy="53" r="2" fill="#333"/>
+              </svg>
+              <div style="display:flex;justify-content:space-between;margin-top:6px;">
+                <span style="font-size:9px;color:var(--muted);">Avg: 5.6 blocks / match</span>
+                <span style="font-size:9px;color:var(--muted);">Avg: 1.38 blocks / set</span>
+              </div>
+            </div>
             <div class="pp-note"><strong>Coach note (Mar 12):</strong> Strong leadership in set 3. Reception improving since Jan drill focus — consider for vice-captain next season.</div>
           </div>
           <div class="cp-panel" id="panel-health">
@@ -809,7 +851,7 @@
     <div class="sec-label">How the Pilot Works</div>
     <h2 class="sec-title">What you're<br>signing up for.</h2>
     <div class="pilot-steps" style="margin-top:40px;">
-      <div class="ps"><div class="ps-n">01</div><div class="ps-title">You apply</div><div class="ps-body">Fill in the form — club name, your name, a couple of sentences about your setup. We'll be in touch within a week.</div><div class="ps-time">Day 1</div></div>
+      <div class="ps"><div class="ps-n">01</div><div class="ps-title">You apply</div><div class="ps-body">Fill in the form — club name, your name, a couple of sentences about your setup. We'll be in touch within a couple of days.</div><div class="ps-time">Day 1</div></div>
       <div class="ps"><div class="ps-n">02</div><div class="ps-title">Requirements call</div><div class="ps-body">One 45-minute call to understand your club's structure and what you need. We build around your real workflow.</div><div class="ps-time">Week 1–2</div></div>
       <div class="ps"><div class="ps-n">03</div><div class="ps-title">On-site onboarding</div><div class="ps-body">The founder comes to you. Players and staff onboarded in person. We stay until the daily check-in habit is established.</div><div class="ps-time">Month 2–3</div></div>
       <div class="ps"><div class="ps-n">04</div><div class="ps-title">Live & iterated</div><div class="ps-body">Weekly check-ins for the first month, then monthly. Direct feedback, direct builds. You're a co-designer, not a user.</div><div class="ps-time">Months 3–12</div></div>
@@ -1254,7 +1296,7 @@
       const data=await res.json();
       if(data.success){
         msg.style.color='#4a9';
-        msg.textContent="Application received — we'll be in touch within a week.";
+        msg.textContent="Application received — we'll be in touch within a couple of days.";
         form.querySelectorAll('input:not([type=hidden]):not([type=checkbox])').forEach(i=>i.value='');
       }else{
         msg.style.color='#a74';
