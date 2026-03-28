@@ -14,7 +14,8 @@
   }
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
   html{scroll-behavior:smooth;}
-  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;overflow-x:hidden;cursor:none;}
+  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;overflow-x:hidden;}
+  @media(min-width:768px){body{cursor:none;}}
 
   @media(min-width:768px){
     .cur{position:fixed;width:5px;height:5px;background:#fff;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);}
@@ -46,9 +47,9 @@
   .mob-logo{display:flex;align-items:center;gap:8px;text-decoration:none;cursor:pointer;}
   .mob-logo svg{width:16px;height:16px;}
   .mob-wm{font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--white);letter-spacing:.12em;}
-  .mob-hbg{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:4px;}
-  .mob-hbg span{width:20px;height:1px;background:var(--white);display:block;transition:all .3s;}
-  .mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:250;}
+  .mob-hbg{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:5px;padding:14px;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+  .mob-hbg span{width:20px;height:1.5px;background:var(--white);display:block;transition:all .3s;}
+  .mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:190;}
   .mob-overlay.open{display:block;}
   @media(max-width:900px){
     .sidenav{transform:translateX(-100%);transition:transform .3s ease;}
@@ -1173,10 +1174,12 @@
   })();
 
   // ── MOBILE NAV ──
-  document.getElementById('mobHbg').addEventListener('click',()=>{
+  function toggleMobileNav(){
     document.getElementById('sidenav').classList.toggle('open');
     document.getElementById('mobOverlay').classList.toggle('open');
-  });
+  }
+  document.getElementById('mobHbg').addEventListener('click',toggleMobileNav);
+  document.getElementById('mobHbg').addEventListener('touchend',function(e){e.preventDefault();toggleMobileNav();});
   document.getElementById('mobOverlay').addEventListener('click',()=>{
     document.getElementById('sidenav').classList.remove('open');
     document.getElementById('mobOverlay').classList.remove('open');
