@@ -15,14 +15,14 @@
   *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
   html{scroll-behavior:smooth;}
   body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;overflow-x:hidden;}
-  @media(min-width:768px){body{cursor:none;}}
 
-  @media(min-width:768px){
+  @media(hover:hover) and (pointer:fine){
     .cur{position:fixed;width:5px;height:5px;background:#fff;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);}
     .cur-r{position:fixed;width:28px;height:28px;border:1px solid rgba(255,255,255,0.18);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .2s,height .2s;}
     body:has(a:hover) .cur-r,body:has(button:hover) .cur-r{width:40px;height:40px;border-color:rgba(255,255,255,.35);}
   }
-  @media(max-width:767px){.cur,.cur-r{display:none;}body{cursor:auto;}}
+  @media not all and (hover:hover) and (pointer:fine){.cur,.cur-r{display:none;}}
+  @media(hover:hover) and (pointer:fine){body{cursor:none;}}
   body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.022;pointer-events:none;z-index:0;}
 
   /* ── SIDE NAV ── */
@@ -309,7 +309,7 @@
   .pf-sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
   .pf-sn{font-size:10px;color:var(--bright);}
   .pf-sv{font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--white);}
-  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:var(--b2);border-radius:2px;outline:none;cursor:pointer;}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:var(--b2);border-radius:2px;outline:none;cursor:pointer;touch-action:none;}
   input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--white);cursor:pointer;}
   input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--white);cursor:pointer;border:none;}
   .pf-btn{width:100%;background:var(--white);color:var(--bg);border:none;padding:11px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.11em;text-transform:uppercase;cursor:pointer;transition:opacity .2s;margin-top:3px;}
@@ -473,6 +473,8 @@
   .pf-logo svg{width:13px;height:13px;opacity:.3;}
   .pf-wm{font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.12em;}
   .pf-note{font-size:10px;color:var(--muted);}
+  .pf-ig{color:var(--muted);transition:color .2s;display:flex;align-items:center;}
+  .pf-ig:hover{color:var(--white);}
 
   /* ── MOBILE ── */
   @media(max-width:1000px){
@@ -694,12 +696,12 @@
 
   <!-- QUOTES -->
   <div class="section">
-    <div class="sec-label">In coaches' words</div>
-    <h2 class="sec-title">Everyone knows this.<br>Nobody's fixed it.</h2>
+    <div class="sec-label">From the research</div>
+    <h2 class="sec-title">This isn't intuition.<br>It's documented.</h2>
     <div class="quotes" style="margin-top:40px;">
-      <div class="q-card"><div class="q-mark">"</div><div class="q-text">When I arrived at my new club, I had nothing. Three months of conversations just to understand which players were carrying old injuries. That time should have been spent on tactics.</div><div class="q-attr"><strong>Head Coach, Women's A1 club</strong>Eastern Europe · 2024</div></div>
-      <div class="q-card"><div class="q-mark">"</div><div class="q-text">Our physio changed last season. We lost two years of injury history for six players. We only found out when one of them reaggravated something that was already logged.</div><div class="q-attr"><strong>Club Administrator, National League</strong>Central Europe · 2023</div></div>
-      <div class="q-card"><div class="q-mark">"</div><div class="q-text">Players don't always say how they really feel because they're afraid of losing their place. A simple, private way to flag something before training — coaches would catch problems weeks earlier.</div><div class="q-attr"><strong>Sports Physiotherapist</strong>Working with two A2 clubs · 2024</div></div>
+      <div class="q-card"><div class="q-mark">"</div><div class="q-text">By properly documenting and reporting injuries, coaches can more effectively recognize injury trends, help athletes avoid potential injuries and better support their recovery process.</div><div class="q-attr"><strong>InjureFree</strong>On volleyball injury reporting</div></div>
+      <div class="q-card"><div class="q-mark">"</div><div class="q-text">Prospectively collected injury surveillance data are essential for designing and implementing injury prevention programmes.</div><div class="q-attr"><strong>Roald Bahr</strong>Oslo Sports Trauma Research Center</div></div>
+      <div class="q-card"><div class="q-mark">"</div><div class="q-text">Volleyball, with its unique calendar structure, presents distinct challenges in training and competition scheduling. This compact calendar necessitates careful management of training loads and recovery periods.</div><div class="q-attr"><strong>Systematic review</strong>Training stress and well-being in volleyball</div></div>
     </div>
   </div>
 
@@ -723,7 +725,7 @@
   <div class="page-footer">
     <div class="pf-logo" onclick="nav('home')"><svg viewBox="0 0 28 28" fill="none"><polygon points="2,24 14,4 26,24 14,18" fill="white"/><rect x="2" y="15.5" width="24" height="2.5" fill="#080808"/></svg><span class="pf-wm">AVC</span></div>
     <span class="pf-note">A Virtual Coach · Open Source</span>
-    <span class="pf-note">© 2026 Alexander Vainilovich</span>
+    <span class="pf-note">© 2026 AVC Systems</span><a href="https://www.instagram.com/avirtualcoach/" target="_blank" rel="noopener" class="pf-ig"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
   </div>
 </div>
 
@@ -844,7 +846,7 @@
   <div class="page-footer">
     <div class="pf-logo" onclick="nav('home')"><svg viewBox="0 0 28 28" fill="none"><polygon points="2,24 14,4 26,24 14,18" fill="white"/><rect x="2" y="15.5" width="24" height="2.5" fill="#080808"/></svg><span class="pf-wm">AVC</span></div>
     <span class="pf-note">A Virtual Coach · Open Source</span>
-    <span class="pf-note">© 2026 Alexander Vainilovich</span>
+    <span class="pf-note">© 2026 AVC Systems</span><a href="https://www.instagram.com/avirtualcoach/" target="_blank" rel="noopener" class="pf-ig"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
   </div>
 </div>
 
@@ -861,6 +863,7 @@
         <p>The check-in is four sliders and a button. <strong>Under 60 seconds, every time.</strong> The simplicity is intentional — if it feels like homework, players stop doing it and the whole system falls apart.</p>
         <p>After submitting, players land on a personal home screen — not an empty confirmation page. Their own stats, a note the coach has chosen to share, medical status from the physio, and two drill suggestions based on their development areas.</p>
         <p>Works on any phone browser. No download. No account creation beyond the first login. Walk through the full flow using the prototype →</p>
+        <p>The check-in parameters shown here are examples — <strong>coaching staff configure which questions players see</strong>, so every club gets exactly the data they need.</p>
       </div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
         <div class="phone-frame">
@@ -875,7 +878,7 @@
                 <div><div class="pf-sh"><span class="pf-sn">Energy</span><span class="pf-sv" id="ve">7</span></div><input type="range" min="1" max="10" value="7" oninput="document.getElementById('ve').textContent=this.value"></div>
                 <div><div class="pf-sh"><span class="pf-sn">Sleep quality</span><span class="pf-sv" id="vs">8</span></div><input type="range" min="1" max="10" value="8" oninput="document.getElementById('vs').textContent=this.value"></div>
                 <div><div class="pf-sh"><span class="pf-sn">Mood</span><span class="pf-sv" id="vm">8</span></div><input type="range" min="1" max="10" value="8" oninput="document.getElementById('vm').textContent=this.value"></div>
-                <div><div class="pf-sh"><span class="pf-sn">Muscle soreness</span><span class="pf-sv" id="vso">4</span></div><input type="range" min="1" max="10" value="4" oninput="document.getElementById('vso').textContent=this.value"></div>
+                <div><div class="pf-sh"><span class="pf-sn">Physical readiness</span><span class="pf-sv" id="vso">4</span></div><input type="range" min="1" max="10" value="4" oninput="document.getElementById('vso').textContent=this.value"></div>
               </div>
               <button class="pf-btn" onclick="pfNext(2)">Next →</button>
             </div>
@@ -916,7 +919,7 @@
   <div class="page-footer">
     <div class="pf-logo" onclick="nav('home')"><svg viewBox="0 0 28 28" fill="none"><polygon points="2,24 14,4 26,24 14,18" fill="white"/><rect x="2" y="15.5" width="24" height="2.5" fill="#080808"/></svg><span class="pf-wm">AVC</span></div>
     <span class="pf-note">A Virtual Coach · Open Source</span>
-    <span class="pf-note">© 2026 Alexander Vainilovich</span>
+    <span class="pf-note">© 2026 AVC Systems</span><a href="https://www.instagram.com/avirtualcoach/" target="_blank" rel="noopener" class="pf-ig"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
   </div>
 </div>
 
@@ -1036,7 +1039,7 @@
   <div class="page-footer">
     <div class="pf-logo" onclick="nav('home')"><svg viewBox="0 0 28 28" fill="none"><polygon points="2,24 14,4 26,24 14,18" fill="white"/><rect x="2" y="15.5" width="24" height="2.5" fill="#080808"/></svg><span class="pf-wm">AVC</span></div>
     <span class="pf-note">A Virtual Coach · Open Source</span>
-    <span class="pf-note">© 2026 Alexander Vainilovich</span>
+    <span class="pf-note">© 2026 AVC Systems</span><a href="https://www.instagram.com/avirtualcoach/" target="_blank" rel="noopener" class="pf-ig"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
   </div>
 </div>
 
@@ -1089,7 +1092,7 @@
   <div class="page-footer">
     <div class="pf-logo" onclick="nav('home')"><svg viewBox="0 0 28 28" fill="none"><polygon points="2,24 14,4 26,24 14,18" fill="white"/><rect x="2" y="15.5" width="24" height="2.5" fill="#080808"/></svg><span class="pf-wm">AVC</span></div>
     <span class="pf-note">A Virtual Coach · Open Source</span>
-    <span class="pf-note">© 2026 Alexander Vainilovich</span>
+    <span class="pf-note">© 2026 AVC Systems</span><a href="https://www.instagram.com/avirtualcoach/" target="_blank" rel="noopener" class="pf-ig"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
   </div>
 </div>
 
@@ -1127,7 +1130,7 @@
   <div class="page-footer">
     <div class="pf-logo" onclick="nav('home')"><svg viewBox="0 0 28 28" fill="none"><polygon points="2,24 14,4 26,24 14,18" fill="white"/><rect x="2" y="15.5" width="24" height="2.5" fill="#080808"/></svg><span class="pf-wm">AVC</span></div>
     <span class="pf-note">A Virtual Coach · Open Source</span>
-    <span class="pf-note">© 2026 Alexander Vainilovich</span>
+    <span class="pf-note">© 2026 AVC Systems</span><a href="https://www.instagram.com/avirtualcoach/" target="_blank" rel="noopener" class="pf-ig"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
   </div>
 </div>
 
