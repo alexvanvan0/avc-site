@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AVC — A Virtual Coach</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#080808; --s1:#0f0f0f; --s2:#141414; --s3:#1a1a1a;
+    --border:#1e1e1e; --b2:#272727; --b3:#333;
+    --muted:#484848; --dim:#666; --text:#999; --bright:#ccc; --white:#f5f5f5;
+    --nav-w:220px;
+  }
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;overflow-x:hidden;cursor:none;}
+
+  @media(min-width:768px){
+    .cur{position:fixed;width:5px;height:5px;background:#fff;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);}
+    .cur-r{position:fixed;width:28px;height:28px;border:1px solid rgba(255,255,255,0.18);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .2s,height .2s;}
+    body:has(a:hover) .cur-r,body:has(button:hover) .cur-r{width:40px;height:40px;border-color:rgba(255,255,255,.35);}
+  }
+  @media(max-width:767px){.cur,.cur-r{display:none;}body{cursor:auto;}}
+  body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.022;pointer-events:none;z-index:1000;}
+
+  /* ── SIDE NAV ── */
+  .sidenav{position:fixed;top:0;left:0;bottom:0;width:var(--nav-w);background:var(--s1);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:200;}
+  .sn-logo{padding:28px 24px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0;cursor:pointer;}
+  .sn-logo svg{width:18px;height:18px;}
+  .sn-wm{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--white);letter-spacing:.14em;}
+  .sn-tagline{font-size:9px;color:var(--muted);letter-spacing:.06em;padding:10px 24px 14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+  .sn-links{flex:1;overflow-y:auto;padding:14px 0;}
+  .sn-group{font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);padding:10px 24px 5px;margin-top:2px;}
+  .sn-link{display:flex;align-items:center;gap:9px;padding:9px 24px;font-size:11px;color:var(--muted);text-decoration:none;border-left:2px solid transparent;transition:color .15s,border-color .15s,background .15s;cursor:pointer;}
+  .sn-link:hover{color:var(--bright);background:rgba(255,255,255,.02);}
+  .sn-link.active{color:var(--white);border-left-color:var(--white);background:rgba(255,255,255,.03);}
+  .sn-dot{width:4px;height:4px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:.4;}
+  .sn-link.active .sn-dot{opacity:1;}
+  .sn-bottom{padding:18px 24px;border-top:1px solid var(--border);flex-shrink:0;}
+  .sn-cta{display:block;text-align:center;background:var(--white);color:var(--bg);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:10px;text-decoration:none;font-family:'JetBrains Mono',monospace;transition:opacity .2s;cursor:pointer;}
+  .sn-cta:hover{opacity:.85;}
+
+  /* mobile */
+  .mob-bar{display:none;position:fixed;top:0;left:0;right:0;height:52px;background:rgba(8,8,8,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);z-index:300;align-items:center;justify-content:space-between;padding:0 20px;}
+  .mob-logo{display:flex;align-items:center;gap:8px;text-decoration:none;cursor:pointer;}
+  .mob-logo svg{width:16px;height:16px;}
+  .mob-wm{font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--white);letter-spacing:.12em;}
+  .mob-hbg{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:4px;padding:4px;}
+  .mob-hbg span{width:20px;height:1px;background:var(--white);display:block;transition:all .3s;}
+  .mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:250;}
+  .mob-overlay.open{display:block;}
+  @media(max-width:900px){
+    .sidenav{transform:translateX(-100%);transition:transform .3s ease;}
+    .sidenav.open{transform:translateX(0);}
+    .mob-bar{display:flex;}
+    .main-wrap{margin-left:0 !important;padding-top:52px;}
+  }
+
+  /* ── MAIN WRAP ── */
+  .main-wrap{margin-left:var(--nav-w);}
+
+  /* ── PAGE SYSTEM ── */
+  .page{display:none;min-height:100vh;}
+  .page.active{display:block;}
+
+  /* page transition */
+  .page.active{animation:pgIn .3s ease forwards;}
+  @keyframes pgIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ── SHARED ── */
+  .section{padding:90px 60px;border-top:1px solid var(--border);}
+  .section:first-child{border-top:none;}
+  .sec-label{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+  .sec-title{font-family:'Syne',sans-serif;font-size:clamp(26px,3.5vw,52px);font-weight:800;color:var(--white);line-height:1.05;letter-spacing:-.025em;}
+  .sec-sub{font-size:12.5px;color:var(--dim);line-height:1.9;margin-top:14px;max-width:600px;}
+  .sec-sub strong{color:var(--text);font-weight:400;}
+
+  /* ── HERO (HOME) ── */
+  .hero{min-height:100vh;padding:80px 60px 60px;display:grid;grid-template-rows:1fr auto;position:relative;overflow:hidden;}
+  .hero::after{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.016) 1px,transparent 1px);background-size:72px 72px;pointer-events:none;}
+  .hero-glow{position:absolute;top:20%;right:0;width:600px;height:600px;background:radial-gradient(circle,rgba(255,255,255,.022) 0%,transparent 65%);pointer-events:none;}
+  .hero-inner{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;position:relative;z-index:2;}
+  .hero-tag{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:22px;display:flex;align-items:center;gap:10px;}
+  .hero-tag::before{content:'';width:24px;height:1px;background:var(--b2);}
+  .hero-h1{font-family:'Syne',sans-serif;font-size:clamp(36px,4.5vw,74px);font-weight:800;color:var(--white);line-height:1.0;letter-spacing:-.03em;margin-bottom:20px;}
+  .hero-h1 span{color:transparent;-webkit-text-stroke:1px rgba(255,255,255,.2);}
+  .hero-sub{font-size:13px;color:var(--dim);line-height:1.85;margin-bottom:30px;}
+  .hero-sub strong{color:var(--bright);font-weight:400;}
+  .hero-acts{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .btn-p{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--bg);background:var(--white);padding:12px 28px;text-decoration:none;font-family:'JetBrains Mono',monospace;transition:opacity .2s;display:inline-block;cursor:pointer;}
+  .btn-p:hover{opacity:.85;}
+  .btn-g{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);text-decoration:none;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:7px;transition:color .2s;cursor:pointer;}
+  .btn-g::after{content:'→';transition:transform .2s;}
+  .btn-g:hover{color:var(--white);}
+  .btn-g:hover::after{transform:translateX(3px);}
+
+  /* hero mock */
+  .mock{background:var(--s1);border:1px solid var(--border);border-radius:2px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.04);}
+  .mock-bar{background:var(--s2);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:8px;}
+  .mock-dot{width:8px;height:8px;border-radius:50%;background:var(--b3);}
+  .mock-url{margin-left:8px;font-size:9px;color:var(--muted);flex:1;background:var(--s3);padding:4px 10px;border-radius:2px;}
+  .mock-body{padding:14px;}
+  .mock-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;}
+  .mock-club{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--bright);}
+  .mock-date{font-size:9px;color:var(--muted);margin-top:1px;}
+  .mock-badge{font-size:9px;background:var(--s3);border:1px solid var(--b2);color:var(--dim);padding:3px 8px;}
+  .mock-sl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+  .mock-rows{display:flex;flex-direction:column;gap:3px;margin-bottom:11px;}
+  .mock-row{display:grid;grid-template-columns:90px 1fr 32px 34px;gap:6px;align-items:center;background:var(--s2);border:1px solid var(--border);padding:6px 9px;}
+  .mock-pn{font-size:10px;color:var(--bright);}
+  .mock-bw{height:3px;background:var(--b2);border-radius:1px;overflow:hidden;}
+  .mock-bf{height:100%;background:var(--white);border-radius:1px;}
+  .mock-sc{font-size:10px;color:var(--dim);text-align:right;}
+  .mock-st{font-size:8px;}
+  .mock-st.ok{color:#4a9;}.mock-st.warn{color:#a74;}.mock-st.rest{color:var(--muted);}
+  .mock-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;}
+  .mock-kpi{background:var(--s2);border:1px solid var(--border);padding:7px 8px;}
+  .mock-kn{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--white);}
+  .mock-kl{font-size:8px;color:var(--muted);margin-top:1px;line-height:1.3;}
+  .hero-cap{margin-top:8px;font-size:9px;color:var(--muted);text-align:center;}
+
+  .hero-bottom{border-top:1px solid var(--border);padding:18px 0;display:flex;align-items:center;gap:36px;flex-wrap:wrap;position:relative;z-index:2;}
+  .hero-bi{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:8px;}
+  .hero-bi::before{content:'';width:4px;height:4px;background:var(--b3);border-radius:50%;flex-shrink:0;}
+
+  /* home audience cards */
+  .audience-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-top:48px;}
+  .audience-card{background:var(--s1);padding:32px;cursor:pointer;transition:background .2s;position:relative;}
+  .audience-card:hover{background:var(--s2);}
+  .audience-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--white);transform:scaleX(0);transform-origin:left;transition:transform .35s;}
+  .audience-card:hover::before{transform:scaleX(1);}
+  .aud-num{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;}
+  .aud-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--white);margin-bottom:8px;}
+  .aud-desc{font-size:12px;color:var(--dim);line-height:1.7;margin-bottom:16px;}
+  .aud-link{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px;transition:color .2s;}
+  .audience-card:hover .aud-link{color:var(--white);}
+  .aud-link::after{content:'→';transition:transform .2s;}
+  .audience-card:hover .aud-link::after{transform:translateX(3px);}
+
+  /* problem */
+  .problem-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
+  .problem-stat{font-family:'Syne',sans-serif;font-size:clamp(70px,10vw,130px);font-weight:800;color:transparent;-webkit-text-stroke:1px var(--b3);line-height:1;letter-spacing:-.04em;margin-bottom:-10px;}
+  .problem-claim{font-family:'Syne',sans-serif;font-size:clamp(20px,2.5vw,32px);font-weight:700;color:var(--white);line-height:1.2;margin-bottom:18px;}
+  .problem-body{font-size:12.5px;color:var(--dim);line-height:1.9;}
+  .problem-body strong{color:var(--text);font-weight:400;}
+  .p-rows{display:flex;flex-direction:column;gap:1px;}
+  .p-row{display:grid;grid-template-columns:26px 1fr;background:var(--border);}
+  .p-num{background:var(--s1);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted);padding:16px 0;}
+  .p-body{background:var(--s1);padding:16px 20px;}
+  .p-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--bright);margin-bottom:3px;}
+  .p-desc{font-size:11px;color:var(--muted);line-height:1.6;}
+
+  /* handoff */
+  .handoff{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);}
+  .hf{padding:30px;}
+  .hf.before{background:var(--s1);}
+  .hf.after{background:var(--s2);}
+  .hf-lbl{font-size:9px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+  .hf-lbl-dot{width:6px;height:6px;border-radius:50%;}
+  .hf.before .hf-lbl{color:var(--muted);}.hf.before .hf-lbl-dot{background:var(--b3);}
+  .hf.after .hf-lbl{color:var(--white);}.hf.after .hf-lbl-dot{background:var(--white);}
+  .hf-event{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;margin-bottom:16px;line-height:1.2;}
+  .hf.before .hf-event{color:var(--dim);}.hf.after .hf-event{color:var(--white);}
+  .hf-items{display:flex;flex-direction:column;gap:5px;}
+  .hf-item{padding:8px 11px;font-size:11px;line-height:1.5;display:flex;gap:8px;}
+  .hf.before .hf-item{background:var(--bg);border:1px solid var(--border);color:var(--muted);}
+  .hf.after .hf-item{background:var(--s1);border:1px solid var(--b2);color:var(--dim);}
+  .hf-icon{flex-shrink:0;font-size:10px;margin-top:1px;}
+  .hf.before .hf-icon{color:var(--muted);}.hf.after .hf-icon{color:#4a9;}
+
+  /* quotes */
+  .quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);}
+  .q-card{background:var(--s1);padding:28px;}
+  .q-mark{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;color:var(--b2);line-height:1;margin-bottom:10px;}
+  .q-text{font-size:12px;color:var(--dim);line-height:1.85;margin-bottom:14px;font-style:italic;}
+  .q-attr{font-size:10px;color:var(--muted);}
+  .q-attr strong{color:var(--text);font-weight:400;display:block;margin-bottom:1px;}
+
+  /* ── COACH DASHBOARD (FOR-CLUBS PAGE) ── */
+  .coach-proto{background:var(--s1);border:1px solid var(--border);border-radius:2px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.8);}
+  .cp-bar{background:var(--s2);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:8px;}
+  .cp-dot{width:8px;height:8px;border-radius:50%;background:var(--b3);}
+  .cp-url{margin-left:6px;font-size:9px;color:var(--muted);flex:1;background:var(--s3);padding:3px 10px;border-radius:2px;}
+  .cp-layout{display:grid;grid-template-columns:164px 1fr;min-height:480px;}
+  .cp-sb{background:var(--s2);border-right:1px solid var(--border);padding:14px 0;}
+  .cp-sb-logo{padding:0 13px 14px;border-bottom:1px solid var(--border);margin-bottom:10px;}
+  .cp-sb-club{font-family:'Syne',sans-serif;font-size:10px;font-weight:800;color:var(--bright);}
+  .cp-sb-role{font-size:9px;color:var(--muted);margin-top:1px;}
+  .cp-nav{padding:7px 13px;font-size:10px;color:var(--muted);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:7px;border-left:2px solid transparent;}
+  .cp-nav:hover{color:var(--text);background:rgba(255,255,255,.02);}
+  .cp-nav.active{color:var(--white);border-left-color:var(--white);background:rgba(255,255,255,.04);}
+  .cp-nav-ico{width:11px;height:11px;opacity:.5;flex-shrink:0;}
+  .cp-nav.active .cp-nav-ico{opacity:1;}
+  .cp-content{padding:20px;overflow:hidden;}
+  .cp-panel{display:none;}.cp-panel.active{display:block;}
+  .cp-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .cp-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--white);}
+  .cp-sub{font-size:9px;color:var(--muted);margin-top:1px;}
+  .cp-badge{font-size:9px;background:var(--s3);border:1px solid var(--b2);color:var(--dim);padding:4px 9px;white-space:nowrap;}
+  .cp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:14px;}
+  .cp-kpi{background:var(--s2);border:1px solid var(--border);padding:9px 11px;}
+  .cp-kn{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:var(--white);}
+  .cp-kl{font-size:8px;color:var(--muted);margin-top:1px;line-height:1.3;}
+  .cp-slbl{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+  .cp-rows{display:flex;flex-direction:column;gap:2px;}
+  .cp-row{display:grid;grid-template-columns:1fr 78px 38px 48px;gap:5px;align-items:center;background:var(--s2);border:1px solid var(--border);padding:7px 9px;cursor:pointer;transition:background .15s;}
+  .cp-row:hover{background:var(--s3);}
+  .cp-pn{font-size:10px;color:var(--bright);}
+  .cp-pos{font-size:9px;color:var(--muted);}
+  .cp-mb{height:2px;background:var(--b2);border-radius:1px;overflow:hidden;}
+  .cp-mf{height:100%;background:var(--white);border-radius:1px;}
+  .cp-val{font-size:10px;color:var(--dim);text-align:right;}
+  .cp-tag{font-size:8px;text-align:right;}
+  .cp-tag.g{color:#4a9;}.cp-tag.a{color:#a74;}
+  /* profile panel */
+  .pp-hdr{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+  .pp-av{width:42px;height:42px;background:var(--s3);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--bright);flex-shrink:0;}
+  .pp-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--white);}
+  .pp-meta{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.6;}
+  .pp-st{margin-left:auto;font-size:9px;background:rgba(68,170,100,.1);border:1px solid rgba(68,170,100,.25);color:#4a9;padding:4px 9px;white-space:nowrap;}
+  .pp-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;}
+  .pp-card{background:var(--s2);border:1px solid var(--border);padding:10px 12px;}
+  .pp-cl{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+  .pp-sr{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);font-size:10px;}
+  .pp-sr:last-child{border-bottom:none;}
+  .pp-sk{color:var(--dim);}.pp-sv{color:var(--bright);}
+  .pp-note{background:var(--s2);border:1px solid var(--border);padding:10px 12px;font-size:10px;color:var(--dim);line-height:1.7;}
+  .pp-note strong{color:var(--text);font-weight:400;}
+  /* health panel */
+  .hl-rows{display:flex;flex-direction:column;gap:1px;}
+  .hl-row{display:grid;grid-template-columns:76px 1fr 74px 62px;gap:9px;align-items:center;background:var(--s2);border:1px solid var(--border);padding:8px 11px;}
+  .hl-row.hdr{background:var(--s3);}
+  .hl-row.hdr .hl-c{font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+  .hl-c{font-size:10px;color:var(--text);}
+  .hl-c.nm{color:var(--bright);}.hl-c.inj{color:var(--dim);}
+  .hl-b{font-size:8px;padding:2px 7px;border:1px solid;}
+  .hl-b.cl{color:#4a9;border-color:rgba(68,170,100,.3);background:rgba(68,170,100,.06);}
+  .hl-b.mn{color:#77a;border-color:rgba(100,100,170,.3);background:rgba(100,100,170,.06);}
+  .hl-b.ac{color:#a74;border-color:rgba(170,120,60,.3);background:rgba(170,120,60,.06);}
+  .hl-flag{font-size:8px;color:var(--dim);}
+  .hl-flag.fl{color:#a74;}
+  /* practice panel */
+  .pr-block{background:var(--s2);border:1px solid var(--border);padding:11px 13px;margin-bottom:7px;}
+  .pr-bh{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
+  .pr-bt{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--white);}
+  .pr-bm{font-size:9px;color:var(--muted);}
+  .pr-drills{display:flex;flex-direction:column;gap:3px;}
+  .pr-drill{display:grid;grid-template-columns:1fr 52px 50px;gap:5px;align-items:center;background:var(--s1);border:1px solid var(--border);padding:5px 8px;}
+  .pr-dn{font-size:10px;color:var(--bright);}
+  .pr-df{font-size:9px;color:var(--muted);}
+  .pr-dt{font-size:9px;color:var(--dim);text-align:right;}
+  .pr-dtype{font-size:8px;padding:2px 5px;border:1px solid var(--b2);color:var(--muted);}
+
+  /* features grid */
+  .feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);}
+  .feat-card{background:var(--s1);padding:30px;transition:background .2s;}
+  .feat-card:hover{background:var(--s2);}
+  .feat-n{font-size:9px;letter-spacing:.14em;color:var(--muted);margin-bottom:11px;}
+  .feat-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--white);margin-bottom:8px;}
+  .feat-desc{font-size:12px;color:var(--muted);line-height:1.75;transition:color .2s;}
+  .feat-card:hover .feat-desc{color:var(--dim);}
+
+  /* pilot steps */
+  .pilot-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);}
+  .ps{background:var(--s1);padding:26px 22px;transition:background .2s;}
+  .ps:hover{background:var(--s2);}
+  .ps-n{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--b2);margin-bottom:10px;}
+  .ps-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--white);margin-bottom:6px;}
+  .ps-body{font-size:11px;color:var(--muted);line-height:1.7;}
+  .ps-time{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:12px;padding-top:11px;border-top:1px solid var(--border);}
+
+  /* cta form */
+  .cta-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;}
+  .cta-eyebrow{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+  .cta-eyebrow::before{content:'';width:20px;height:1px;background:var(--b2);}
+  .cta-title{font-family:'Syne',sans-serif;font-size:clamp(26px,3.5vw,50px);font-weight:800;color:var(--white);line-height:1.0;letter-spacing:-.03em;margin-bottom:14px;}
+  .cta-body{font-size:12.5px;color:var(--dim);line-height:1.9;margin-bottom:26px;}
+  .cta-form{display:flex;flex-direction:column;gap:8px;}
+  .form-r2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .f-in{background:var(--s1);border:1px solid var(--border);padding:11px 14px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--bright);width:100%;outline:none;transition:border-color .2s;}
+  .f-in::placeholder{color:var(--muted);}
+  .f-in:focus{border-color:var(--b3);}
+  .f-btn{background:var(--white);color:var(--bg);border:none;padding:11px 24px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.11em;text-transform:uppercase;cursor:pointer;transition:opacity .2s;align-self:flex-start;margin-top:3px;}
+  .f-btn:hover{opacity:.85;}
+  .f-note{font-size:10px;color:var(--muted);margin-top:7px;}
+  .cta-perks{display:flex;flex-direction:column;}
+  .perk{padding:15px 0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:15px 1fr;gap:11px;}
+  .perk:first-child{border-top:1px solid var(--border);}
+  .perk-check{font-size:10px;color:var(--white);}
+  .perk-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--bright);margin-bottom:2px;}
+  .perk-desc{font-size:11px;color:var(--muted);line-height:1.6;}
+
+  /* ── PLAYER PAGE ── */
+  .player-wrap{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
+  .player-intro{font-size:12.5px;color:var(--dim);line-height:1.9;}
+  .player-intro strong{color:var(--text);font-weight:400;}
+  .player-intro p+p{margin-top:14px;}
+  .phone-frame{width:288px;margin:0 auto;background:var(--s1);border:1px solid var(--border);border-radius:30px;overflow:hidden;box-shadow:0 48px 100px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.05);}
+  .phone-notch{background:var(--s2);height:26px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border);}
+  .phone-nb{width:54px;height:4px;background:var(--b2);border-radius:4px;}
+  .phone-body{padding:20px 17px;max-height:540px;overflow-y:auto;}
+  .pf-greet{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--white);margin-bottom:2px;}
+  .pf-sub{font-size:10px;color:var(--muted);margin-bottom:16px;}
+  .pf-screen{display:none;}.pf-screen.active{display:block;}
+  .pf-lbl{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:11px;}
+  .pf-sliders{display:flex;flex-direction:column;gap:11px;margin-bottom:16px;}
+  .pf-sh{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+  .pf-sn{font-size:10px;color:var(--bright);}
+  .pf-sv{font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--white);}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:var(--b2);border-radius:2px;outline:none;cursor:pointer;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--white);cursor:pointer;}
+  input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--white);cursor:pointer;border:none;}
+  .pf-btn{width:100%;background:var(--white);color:var(--bg);border:none;padding:11px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.11em;text-transform:uppercase;cursor:pointer;transition:opacity .2s;margin-top:3px;}
+  .pf-btn:hover{opacity:.85;}
+  .pf-btn.sec{background:transparent;color:var(--muted);border:1px solid var(--border);margin-top:6px;}
+  .pf-btn.sec:hover{color:var(--white);border-color:var(--b3);}
+  .pf-choices{display:flex;flex-direction:column;gap:5px;margin-bottom:16px;}
+  .pf-choice{padding:10px 11px;background:var(--s2);border:1px solid var(--border);font-size:10px;color:var(--dim);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:8px;}
+  .pf-choice:hover{border-color:var(--b3);color:var(--text);}
+  .pf-choice.sel{border-color:var(--white);color:var(--white);background:rgba(255,255,255,.03);}
+  .pf-choice::before{content:'';width:9px;height:9px;border:1px solid var(--b3);border-radius:50%;flex-shrink:0;transition:all .15s;}
+  .pf-choice.sel::before{background:var(--white);border-color:var(--white);}
+  .pf-done-icon{width:42px;height:42px;border:1px solid var(--b2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:14px auto 12px;font-size:18px;}
+  .pf-done-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--white);text-align:center;margin-bottom:5px;}
+  .pf-done-sub{font-size:11px;color:var(--muted);line-height:1.7;text-align:center;}
+  .pf-progress{display:flex;gap:3px;margin-bottom:16px;}
+  .pf-step{flex:1;height:2px;background:var(--b2);border-radius:1px;transition:background .3s;}
+  .pf-step.done{background:var(--white);}
+  .ph-greet{font-family:'Syne',sans-serif;font-size:12px;font-weight:800;color:var(--white);margin-bottom:10px;}
+  .ph-ready{background:var(--s2);border:1px solid var(--border);padding:10px 12px;margin-bottom:7px;}
+  .ph-rl{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+  .ph-rn{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--white);line-height:1;margin-bottom:6px;}
+  .ph-rb{height:2px;background:var(--b2);border-radius:1px;overflow:hidden;}
+  .ph-rf{height:100%;background:var(--white);border-radius:1px;}
+  .ph-card{background:var(--s2);border:1px solid var(--border);padding:10px 12px;margin-bottom:6px;}
+  .ph-ct{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+  .ph-cl{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+  .ph-cs{font-size:9px;color:var(--muted);}
+  .ph-sr{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:10px;}
+  .ph-sr:last-child{border-bottom:none;}
+  .ph-sk{color:var(--dim);}.ph-sv{color:var(--bright);}
+  .ph-note{font-size:10px;color:var(--dim);line-height:1.7;font-style:italic;}
+  .ph-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+  .ph-dot.ok{background:#4a9;}.ph-dot.warn{background:#a74;}
+  .ph-st{display:flex;align-items:flex-start;gap:7px;}
+  .ph-stxt{font-size:10px;color:var(--dim);line-height:1.6;}
+  .ph-drill{padding:5px 0;border-bottom:1px solid var(--border);}
+  .ph-drill:last-child{border-bottom:none;}
+  .ph-dn{font-size:10px;color:var(--bright);}
+  .ph-df{font-size:9px;color:var(--muted);margin-top:1px;}
+
+  /* ── NATIONAL TEAMS PAGE ── */
+  .nt-interface{border:1px solid var(--border);background:var(--s1);border-radius:2px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.7);}
+  .nt-tabbar{background:var(--s2);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;}
+  .nt-tab{padding:12px 18px;font-size:10px;letter-spacing:.05em;color:var(--muted);cursor:pointer;transition:all .15s;border-bottom:2px solid transparent;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  .nt-tab:hover{color:var(--text);}
+  .nt-tab.active{color:var(--white);border-bottom-color:var(--white);background:rgba(255,255,255,.03);}
+  .nt-tab-dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.5;flex-shrink:0;}
+  .nt-tab.active .nt-tab-dot{opacity:1;}
+  .nt-panels{padding:22px;}
+  .nt-panel{display:none;}.nt-panel.active{display:block;}
+  /* club view tab */
+  .nt-cv{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .nt-cv-hdr{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--white);margin-bottom:3px;}
+  .nt-cv-sub{font-size:9px;color:var(--muted);margin-bottom:14px;}
+  .nt-mkpis{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:12px;}
+  .nt-mk{background:var(--s2);border:1px solid var(--border);padding:9px 11px;}
+  .nt-mkn{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--white);}
+  .nt-mkl{font-size:8px;color:var(--muted);margin-top:1px;line-height:1.3;}
+  .nt-squad{display:flex;flex-direction:column;gap:2px;}
+  .nt-sr{display:grid;grid-template-columns:1fr 56px 34px;gap:5px;align-items:center;background:var(--s2);border:1px solid var(--border);padding:6px 9px;cursor:pointer;transition:background .15s;}
+  .nt-sr:hover{background:var(--s3);}
+  .nt-pn{font-size:10px;color:var(--bright);}
+  .nt-pos{font-size:9px;color:var(--muted);}
+  .nt-val{font-size:10px;color:var(--dim);text-align:right;}
+  .nt-stag{font-size:8px;text-align:right;}
+  .nt-stag.g{color:#4a9;}.nt-stag.a{color:#a74;}
+  .nt-export-box{background:var(--s2);border:1px solid var(--b2);padding:14px;}
+  .nt-export-lbl{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .nt-ep{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:10px;}
+  .nt-ep:last-child{border-bottom:none;}
+  .nt-epn{color:var(--bright);}
+  .nt-epbtn{font-size:8px;padding:3px 7px;border:1px solid var(--b3);color:var(--muted);cursor:pointer;background:none;font-family:'JetBrains Mono',monospace;transition:all .15s;}
+  .nt-epbtn:hover{border-color:var(--white);color:var(--white);}
+  /* callup tab */
+  .cu-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+  .cu-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--white);}
+  .cu-sub{font-size:9px;color:var(--muted);margin-top:2px;}
+  .cu-ebtn{font-size:9px;background:var(--white);color:var(--bg);padding:5px 12px;border:none;font-family:'JetBrains Mono',monospace;cursor:pointer;letter-spacing:.07em;text-transform:uppercase;}
+  .cu-rows{display:flex;flex-direction:column;gap:2px;margin-bottom:14px;}
+  .cu-phdr,.cu-prow{display:grid;grid-template-columns:1fr 76px 76px 66px;gap:7px;align-items:center;padding:7px 11px;border:1px solid var(--border);}
+  .cu-phdr{background:var(--s3);border-color:var(--b2);}
+  .cu-phdr span{font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+  .cu-prow{background:var(--s2);}
+  .cu-prow.nd{opacity:.4;}
+  .cu-pn{font-size:10px;color:var(--bright);}
+  .cu-pc{font-size:9px;color:var(--muted);}
+  .cu-load{font-size:9px;text-align:center;}
+  .cu-load.hi{color:#4a9;}.cu-load.md{color:#a74;}.cu-load.na{color:var(--muted);}
+  .cu-status{font-size:9px;text-align:center;}
+  .cu-status.ok{color:#4a9;}.cu-status.mo{color:#a74;}.cu-status.uk{color:var(--muted);}
+  .cu-flag{font-size:8px;text-align:right;color:var(--muted);}
+  .cu-flag.fl{color:#a74;}
+  .cu-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;}
+  .cu-kpi{background:var(--s2);border:1px solid var(--border);padding:9px 11px;}
+  .cu-kn{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--white);}
+  .cu-kl{font-size:8px;color:var(--muted);margin-top:1px;line-height:1.3;}
+  /* federation tab */
+  .fed-g{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .fed-block{background:var(--s2);border:1px solid var(--border);padding:14px;}
+  .fed-bl{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .fed-clubs{display:flex;flex-direction:column;gap:2px;}
+  .fed-cr{display:grid;grid-template-columns:1fr 38px 58px;gap:6px;align-items:center;background:var(--s1);border:1px solid var(--border);padding:6px 9px;}
+  .fed-cn{font-size:10px;color:var(--bright);}
+  .fed-cp{font-size:10px;color:var(--dim);text-align:center;}
+  .fed-cs{font-size:8px;text-align:right;}
+  .fed-cs.on{color:#4a9;}.fed-cs.off{color:var(--muted);}
+  .fed-wrows{display:flex;flex-direction:column;gap:1px;border:1px solid var(--border);}
+  .fed-wr{display:flex;justify-content:space-between;align-items:center;background:var(--s2);padding:8px 11px;border-bottom:1px solid var(--border);}
+  .fed-wr:last-child{border-bottom:none;}
+  .fed-wk{font-size:10px;color:var(--dim);}
+  .fed-wv{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);border:1px solid var(--border);padding:2px 7px;background:var(--bg);}
+  .fed-note{font-size:9px;color:var(--muted);font-style:italic;margin-top:9px;}
+  /* handoff tab */
+  .hf-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:14px;}
+  .hfs{background:var(--s1);padding:18px 16px;}
+  .hfs.act{background:var(--s2);}
+  .hfs-n{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--b2);margin-bottom:8px;}
+  .hfs.act .hfs-n{color:var(--b3);}
+  .hfs-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--bright);margin-bottom:5px;}
+  .hfs-desc{font-size:10px;color:var(--muted);line-height:1.6;}
+  .hfs-tag{font-size:8px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-top:10px;padding-top:9px;border-top:1px solid var(--border);}
+  .hfs.act .hfs-tag{color:var(--white);}
+  .hf-preview{background:var(--s2);border:1px solid var(--border);padding:14px;}
+  .hf-pl{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .hf-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;}
+  .hf-field{background:var(--s1);border:1px solid var(--border);padding:7px 9px;}
+  .hf-fl{font-size:8px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+  .hf-fv{font-size:10px;color:var(--bright);}
+
+  /* ── OPEN SOURCE PAGE ── */
+  .os-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start;}
+  .os-pillars{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);}
+  .os-pillar{background:var(--s1);padding:20px;transition:background .2s;}
+  .os-pillar:hover{background:var(--s2);}
+  .os-pn{font-size:9px;letter-spacing:.12em;color:var(--muted);margin-bottom:7px;}
+  .os-pt{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--white);margin-bottom:5px;}
+  .os-pd{font-size:11px;color:var(--muted);line-height:1.65;}
+  .os-text{font-size:12.5px;color:var(--dim);line-height:1.9;}
+  .os-text strong{color:var(--text);font-weight:400;display:block;margin-bottom:5px;}
+  .os-text p+p{margin-top:14px;}
+  .os-stack{margin-top:22px;display:flex;flex-direction:column;gap:1px;border:1px solid var(--border);}
+  .os-sr{display:grid;grid-template-columns:76px 1fr;background:var(--border);gap:1px;}
+  .os-sk{background:var(--s2);padding:8px 11px;font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
+  .os-sv{background:var(--s1);padding:8px 11px;font-size:10px;color:var(--dim);}
+
+  /* ── FAQ PAGE ── */
+  .faq-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);}
+  .faq-item{background:var(--s1);cursor:pointer;transition:background .2s;}
+  .faq-item:hover{background:var(--s2);}
+  .faq-q{padding:19px 22px;font-size:12px;color:var(--bright);display:flex;justify-content:space-between;align-items:center;gap:13px;line-height:1.4;}
+  .faq-arr{font-size:14px;color:var(--muted);flex-shrink:0;transition:transform .3s;}
+  .faq-item.open .faq-arr{transform:rotate(45deg);color:var(--white);}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+  .faq-item.open .faq-a{max-height:500px;}
+  .faq-ai{padding:14px 22px 18px;font-size:11.5px;color:var(--muted);line-height:1.8;border-top:1px solid var(--border);}
+
+  /* ── FOOTER (per page) ── */
+  .page-footer{border-top:1px solid var(--border);padding:26px 60px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+  .pf-logo{display:flex;align-items:center;gap:8px;cursor:pointer;}
+  .pf-logo svg{width:13px;height:13px;opacity:.3;}
+  .pf-wm{font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.12em;}
+  .pf-note{font-size:10px;color:var(--muted);}
+
+  /* ── MOBILE ── */
+  @media(max-width:1000px){
+    .hero-inner{grid-template-columns:1fr;}
+    .hero-right{display:none;}
+    .nt-cv{grid-template-columns:1fr;}
+    .fed-g{grid-template-columns:1fr;}
+    .hf-flow{grid-template-columns:1fr 1fr;}
+    .hf-fields{grid-template-columns:1fr 1fr;}
+  }
+  @media(max-width:900px){
+    .section{padding:64px 28px;}
+    .hero{padding:64px 28px 48px;}
+    .problem-grid,.cta-grid,.os-grid,.player-wrap{grid-template-columns:1fr;gap:40px;}
+    .handoff,.quotes{grid-template-columns:1fr;}
+    .audience-grid,.feat-grid,.os-pillars,.pilot-steps,.faq-grid{grid-template-columns:1fr;}
+    .cp-layout{grid-template-columns:1fr;}
+    .cp-sb{display:flex;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border);padding:10px;}
+    .cp-sb-logo{display:none;}
+    .cp-nav{border-left:none;border-bottom:2px solid transparent;white-space:nowrap;padding:7px 11px;}
+    .cp-nav.active{border-bottom-color:var(--white);border-left:none;}
+    .cp-pos{display:none;}
+    .cp-kpis{grid-template-columns:1fr 1fr;}
+    .pp-grid{grid-template-columns:1fr;}
+    .nt-tabbar{overflow-x:auto;}
+    .hf-flow{grid-template-columns:1fr;}
+    .page-footer{padding:22px 28px;}
+    .form-r2{grid-template-columns:1fr;}
+  }
+  @media(max-width:600px){
+    .cu-phdr,.cu-prow{grid-template-columns:1fr 60px 60px;}
+    .cu-flag{display:none;}
+    .hero-bottom{gap:14px;}
+    .hf-fields{grid-template-columns:1fr;}
+  }
+
+  .sn-apply-hint{background:var(--s2);border:1px solid var(--border);padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:border-color .2s;}
+  .sn-apply-hint:hover{border-color:var(--b3);}
+  .sn-ah-label{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--white);margin-bottom:2px;}
+  .sn-ah-sub{font-size:9px;color:var(--muted);letter-spacing:.04em;}
+
+
+  .audience-card--primary{grid-column:span 2;}
+  @media(max-width:900px){.audience-card--primary{grid-column:span 1;}}
+  .audience-grid{grid-template-columns:1fr 1fr;}
+  @media(max-width:900px){.audience-grid{grid-template-columns:1fr;}}
+  .aud-sub-features{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 16px;}
+  .aud-sub-features span{font-size:9px;padding:3px 10px;border:1px solid var(--border);color:var(--muted);letter-spacing:.05em;}
+  .audience-card--primary .aud-title{font-size:26px;}
+  .audience-card--primary .aud-desc{max-width:480px;}
+
+
+  .bottom-cta{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
+  @media(max-width:900px){.bottom-cta{grid-template-columns:1fr;gap:32px;}}
+  .bottom-cta-right{}
+
+</style>
+</head>
+<body>
+
+<div class="cur" id="cur"></div>
+<div class="cur-r" id="curR"></div>
+
+<!-- ── SIDE NAV ── -->
+<nav class="sidenav" id="sidenav">
+  <div class="sn-logo" onclick="nav('home')">
+    <svg viewBox="0 0 28 28" fill="none"><polygon points="2,24 14,4 26,24 14,18" fill="white"/><rect x="2" y="15.5" width="24" height="2.5" fill="#0f0f0f"/></svg>
+    <span class="sn-wm">AVC</span>
+  </div>
+  <div class="sn-tagline">A Virtual Coach</div>
+  <div class="sn-links">
+    <div class="sn-group">Overview</div>
+    <div class="sn-link" data-page="home" onclick="nav('home')"><div class="sn-dot"></div>Home</div>
+    <div class="sn-group">Product</div>
+    <div class="sn-link" data-page="clubs" onclick="nav('clubs')"><div class="sn-dot"></div>For Clubs</div>
+    <div class="sn-link" data-page="players" onclick="nav('players')"><div class="sn-dot"></div>For Players</div>
+    <div class="sn-link" data-page="national" onclick="nav('national')"><div class="sn-dot"></div>National Teams</div>
+    <div class="sn-group">More</div>
+    <div class="sn-link" data-page="opensource" onclick="nav('opensource')"><div class="sn-dot"></div>Open Source</div>
+    <div class="sn-link" data-page="faq" onclick="nav('faq')"><div class="sn-dot"></div>FAQ</div>
+  </div>
+  <div class="sn-bottom">
+<div class="sn-cta" onclick="nav('clubs');setTimeout(()=>document.getElementById('pilot-form').scrollIntoView({behavior:'smooth'}),100)">Apply for Pilot →</div>
+  </div>
+</nav>
+
+<!-- MOBILE BAR -->
+<div class="mob-bar">
+  <div class="mob-logo" onclick="nav('home')">
+    <svg viewBox="0 0 28 28" fill="none"><polygon points="2,24 14,4 26,24 14,18" fill="white"/><rect x="2" y="15.5" width="24" height="2.5" fill="#080808"/></svg>
+    <span class="mob-wm">AVC</span>
+  </div>
+  <button class="mob-hbg" id="mobHbg"><span></span><span></span><span></span></button>
+</div>
+<div class="mob-overlay" id="mobOverlay"></div>
+
+<!-- ── MAIN ── -->
+<div class="main-wrap">
+
+<!-- ════════════════════════════════════════════════
+     PAGE: HOME
+════════════════════════════════════════════════ -->
+<div class="page active" id="page-home">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+      <div>
+        <div class="hero-tag">Open-source · Hosted · Built for volleyball clubs</div>
+        <h1 class="hero-h1">The player data your club <span>never loses.</span></h1>
+        <p class="hero-sub">AVC captures everything coaching staff know about their players — injuries, daily wellness, medication, performance. <strong>Players self-report in 60 seconds. Coaches see everything. And the work you build here stays — no matter who comes next.</strong></p>
+        <div class="hero-acts">
+          <div class="btn-p" onclick="nav('clubs');setTimeout(()=>document.getElementById('pilot-form').scrollIntoView({behavior:'smooth'}),100)">Apply for Pilot</div>
+          <div class="btn-g" onclick="nav('clubs')">See the product</div>
+        </div>
+      </div>
+      <div class="hero-right">
+        <div class="mock">
+          <div class="mock-bar"><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-dot"></div><div class="mock-url">app.avc.coach / dashboard</div></div>
+          <div class="mock-body">
+            <div class="mock-hdr"><div><div class="mock-club">VC Northgate — Women's</div><div class="mock-date">Training · Fri 27 Mar · 09:45</div></div><div class="mock-badge">14 / 14 checked in</div></div>
+            <div class="mock-sl">Pre-session readiness</div>
+            <div class="mock-rows">
+              <div class="mock-row"><div class="mock-pn">Kovač, M.</div><div class="mock-bw"><div class="mock-bf" style="width:92%"></div></div><div class="mock-sc">9.2</div><div class="mock-st ok">Ready</div></div>
+              <div class="mock-row"><div class="mock-pn">Lemos, T.</div><div class="mock-bw"><div class="mock-bf" style="width:80%"></div></div><div class="mock-sc">8.0</div><div class="mock-st ok">Ready</div></div>
+              <div class="mock-row"><div class="mock-pn">Berger, S.</div><div class="mock-bw"><div class="mock-bf" style="width:54%"></div></div><div class="mock-sc">5.4</div><div class="mock-st warn">Monitor</div></div>
+              <div class="mock-row"><div class="mock-pn">Okafor, D.</div><div class="mock-bw"><div class="mock-bf" style="width:35%"></div></div><div class="mock-sc">3.5</div><div class="mock-st rest">Rest</div></div>
+            </div>
+            <div class="mock-kpis">
+              <div class="mock-kpi"><div class="mock-kn">61%</div><div class="mock-kl">Kill %<br>week</div></div>
+              <div class="mock-kpi"><div class="mock-kn">0</div><div class="mock-kl">Injury<br>flags</div></div>
+              <div class="mock-kpi"><div class="mock-kn">7.8</div><div class="mock-kl">Avg<br>readiness</div></div>
+              <div class="mock-kpi"><div class="mock-kn">12</div><div class="mock-kl">Sessions<br>logged</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-cap">Coach dashboard · Live preview</div>
+      </div>
+    </div>
+    <div class="hero-bottom">
+      <div class="hero-bi">Web-based — no installation</div>
+      <div class="hero-bi">Players self-report in under 60 seconds</div>
+      <div class="hero-bi">Full export PDF + JSON at any time</div>
+      <div class="hero-bi">Free for pilot clubs</div>
+    </div>
+  </div>
+
+  <!-- PROBLEM -->
+  <div class="section">
+    <div class="sec-label">The Problem</div>
+    <h2 class="sec-title">New role. New club.<br>None of your records follow.</h2>
+    <div class="problem-grid" style="margin-top:44px;">
+      <div>
+        <div class="problem-stat">3</div>
+        <h3 class="problem-claim">coaches. One club.<br>Zero shared records.</h3>
+        <p class="problem-body">The average volleyball club changes head coach every 2–3 seasons. <strong>Each transition wipes the institutional memory</strong> — injury history, readiness patterns, supplement logs — because the sport has no standard way to store it somewhere that survives.</p>
+      </div>
+      <div>
+        <div class="p-rows">
+          <div class="p-row"><div class="p-num">1</div><div class="p-body"><div class="p-title">The data lives in people</div><div class="p-desc">Injury history, readiness patterns, medication notes — in a coach's head or a personal spreadsheet with no standard way to hand it over.</div></div></div>
+          <div class="p-row"><div class="p-num">2</div><div class="p-body"><div class="p-title">The handoff never happens</div><div class="p-desc">No standard format, no export. The new coach starts from conversation and observation alone.</div></div></div>
+          <div class="p-row"><div class="p-num">3</div><div class="p-body"><div class="p-title">Players pay the price</div><div class="p-desc">Lost injury history. Missed supplement flags. Fatigue misread as attitude. Players re-prove everything to someone new.</div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="handoff" style="margin-top:40px;">
+      <div class="hf before">
+        <div class="hf-lbl"><div class="hf-lbl-dot"></div>Without AVC</div>
+        <div class="hf-event">Three seasons of knowledge. No way to pass it on.</div>
+        <div class="hf-items">
+          <div class="hf-item"><div class="hf-icon">✕</div><div>Injury history — in a notebook nobody can find</div></div>
+          <div class="hf-item"><div class="hf-icon">✕</div><div>Readiness patterns — in the previous coach's memory</div></div>
+          <div class="hf-item"><div class="hf-icon">✕</div><div>Medication logs — on a personal WhatsApp group</div></div>
+          <div class="hf-item"><div class="hf-icon">✕</div><div>New coach starts from zero on day one</div></div>
+        </div>
+      </div>
+      <div class="hf after">
+        <div class="hf-lbl"><div class="hf-lbl-dot"></div>With AVC</div>
+        <div class="hf-event">One export. New coach inherits everything.</div>
+        <div class="hf-items">
+          <div class="hf-item"><div class="hf-icon">✓</div><div>Full injury history — timestamped, searchable, exportable</div></div>
+          <div class="hf-item"><div class="hf-icon">✓</div><div>Readiness trends — 18 months of data per player</div></div>
+          <div class="hf-item"><div class="hf-icon">✓</div><div>Medication and supplement log — with anti-doping flags</div></div>
+          <div class="hf-item"><div class="hf-icon">✓</div><div>New coach knows every player on day one</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUDIENCE CARDS -->
+  <div class="section">
+    <div class="sec-label">Who it's for</div>
+    <h2 class="sec-title">Built for everyone<br>in the club.</h2>
+    <div class="audience-grid" style="margin-top:40px;">
+      <div class="audience-card audience-card--primary" onclick="nav('clubs')">
+        <div class="aud-num">01 / Primary Audience</div>
+        <div class="aud-title">For Clubs</div>
+        <div class="aud-desc">The full coach dashboard — squad readiness before every session, player CRM, health and medical log, practice planning, strategy board. Everything a coaching staff needs, in one place, from day one.</div>
+        <div class="aud-sub-features">
+          <span>Player CRM</span><span>Health Log</span><span>Performance Dashboard</span><span>Practice Planning</span>
+        </div>
+        <div class="aud-link">Explore the coach view</div>
+      </div>
+      <div class="audience-card" onclick="nav('players')">
+        <div class="aud-num">02 / Players</div>
+        <div class="aud-title">For Players</div>
+        <div class="aud-desc">A 60-second pre-session check-in on any phone. Then a personal dashboard — your stats, a coach note, medical status, and drill suggestions based on where you're developing.</div>
+        <div class="aud-link">See the player portal</div>
+      </div>
+      <div class="audience-card" onclick="nav('national')">
+        <div class="aud-num">03 / Federations & NT</div>
+        <div class="aud-title">National Teams</div>
+        <div class="aud-desc">When a player gets called up, their full profile travels with them. The national coach sees everything the club coach saw — injuries, readiness trends, medication — on day one of camp.</div>
+        <div class="aud-link">See the national team view</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUOTES -->
+  <div class="section">
+    <div class="sec-label">In coaches' words</div>
+    <h2 class="sec-title">Everyone knows this.<br>Nobody's fixed it.</h2>
+    <div class="quotes" style="margin-top:40px;">
+      <div class="q-card"><div class="q-mark">"</div><div class="q-text">When I arrived at my new club, I had nothing. Three months of conversations just to understand which players were carrying old injuries. That time should have been spent on tactics.</div><div class="q-attr"><strong>Head Coach, Women's A1 club</strong>Eastern Europe · 2024</div></div>
+      <div class="q-card"><div class="q-mark">"</div><div class="q-text">Our physio changed last season. We lost two years of injury history for six players. We only found out when one of them reaggravated something that was already logged.</div><div class="q-attr"><strong>Club Administrator, National League</strong>Central Europe · 2023</div></div>
+      <div class="q-card"><div class="q-mark">"</div><div class="q-text">Players don't always say how they really feel because they're afraid of losing their place. A simple, private way to flag something before training — coaches would catch problems weeks earlier.</div><div class="q-attr"><strong>Sports Physiotherapist</strong>Working with two A2 clubs · 2024</div></div>
+    </div>
+  </div>
+
+  <!-- HOME BOTTOM CTA -->
+  <div class="section" style="border-top:1px solid var(--border);">
+    <div class="bottom-cta">
+      <div>
+        <div class="sec-label">Ready to fix this?</div>
+        <h2 class="sec-title" style="font-size:clamp(24px,3vw,44px);">One pilot club.<br>No cost. On-site.</h2>
+      </div>
+      <div class="bottom-cta-right">
+        <p style="font-size:12.5px;color:var(--dim);line-height:1.9;margin-bottom:20px;">AVC is looking for one club to pilot this properly. The founder comes to you personally for onboarding. Free for the full pilot period.</p>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;">
+          <div class="btn-p" onclick="nav('clubs');setTimeout(()=>document.getElementById('pilot-form').scrollIntoView({behavior:'smooth'}),100)">Apply for Pilot</div>
+          <div class="btn-g" onclick="nav('faq')">Read the FAQ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <div class="pf-logo" onclick="nav('home')"><svg viewBox="0 0 28 28" fill="none"><polygon points="2,24 14,4 26,24 14,18" fill="white"/><rect x="2" y="15.5" width="24" height="2.5" fill="#080808"/></svg><span class="pf-wm">AVC</span></div>
+    <span class="pf-note">A Virtual Coach · Open Source</span>
+    <span class="pf-note">© 2026 Alexander Vainilovich</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     PAGE: FOR CLUBS
+════════════════════════════════════════════════ -->
+<div class="page" id="page-clubs">
+
+  <div class="section">
+    <div class="sec-label">For Clubs & Coaching Staff</div>
+    <h2 class="sec-title">The full picture.<br>Before they arrive.</h2>
+    <p class="sec-sub">The coach dashboard gives staff a complete view of the squad — readiness, health records, performance trends, and session planning. Click the sidebar tabs to explore each section.</p>
+
+    <div class="coach-proto" style="margin-top:40px;">
+      <div class="cp-bar"><div class="cp-dot"></div><div class="cp-dot"></div><div class="cp-dot"></div><div class="cp-url">app.avc.coach / coach / dashboard</div></div>
+      <div class="cp-layout">
+        <div class="cp-sb">
+          <div class="cp-sb-logo"><div class="cp-sb-club">VC Northgate</div><div class="cp-sb-role">Head Coach · 2025/26</div></div>
+          <div class="cp-nav active" data-panel="dashboard"><svg class="cp-nav-ico" viewBox="0 0 12 12" fill="none"><rect x="0" y="0" width="5" height="5" fill="currentColor" opacity=".6"/><rect x="7" y="0" width="5" height="5" fill="currentColor" opacity=".6"/><rect x="0" y="7" width="5" height="5" fill="currentColor" opacity=".6"/><rect x="7" y="7" width="5" height="5" fill="currentColor" opacity=".6"/></svg>Dashboard</div>
+          <div class="cp-nav" data-panel="profile"><svg class="cp-nav-ico" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="4" r="3" stroke="currentColor" stroke-width="1"/><path d="M1 11c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" stroke-width="1"/></svg>Player Profile</div>
+          <div class="cp-nav" data-panel="health"><svg class="cp-nav-ico" viewBox="0 0 12 12" fill="none"><path d="M6 1L7.5 4.5H11L8 7l1.5 3.5L6 8.5 2.5 10.5 4 7 1 4.5h3.5z" stroke="currentColor" stroke-width="1"/></svg>Health Log</div>
+          <div class="cp-nav" data-panel="practice"><svg class="cp-nav-ico" viewBox="0 0 12 12" fill="none"><rect x="1" y="2" width="10" height="8" rx="1" stroke="currentColor" stroke-width="1"/><path d="M1 5h10M4 2V1M8 2V1" stroke="currentColor" stroke-width="1"/></svg>Practice Plan</div>
+        </div>
+        <div class="cp-content">
+          <div class="cp-panel active" id="panel-dashboard">
+            <div class="cp-hdr"><div><div class="cp-title">Good morning, Coach.</div><div class="cp-sub">Friday 27 March · Pre-training overview</div></div><div class="cp-badge">14 / 14 checked in</div></div>
+            <div class="cp-kpis"><div class="cp-kpi"><div class="cp-kn">7.8</div><div class="cp-kl">Squad avg<br>readiness</div></div><div class="cp-kpi"><div class="cp-kn">2</div><div class="cp-kl">Players to<br>monitor</div></div><div class="cp-kpi"><div class="cp-kn">61%</div><div class="cp-kl">Kill % this<br>week</div></div><div class="cp-kpi"><div class="cp-kn">0</div><div class="cp-kl">Open injury<br>flags</div></div></div>
+            <div class="cp-slbl">Squad readiness — click a player for their profile</div>
+            <div class="cp-rows">
+              <div class="cp-row" onclick="switchPanel('profile')"><div><div class="cp-pn">Kovač, M.</div><div class="cp-pos">Outside Hitter</div></div><div class="cp-mb"><div class="cp-mf" style="width:92%"></div></div><div class="cp-val">9.2</div><div class="cp-tag g">Ready</div></div>
+              <div class="cp-row" onclick="switchPanel('profile')"><div><div class="cp-pn">Lemos, T.</div><div class="cp-pos">Setter</div></div><div class="cp-mb"><div class="cp-mf" style="width:80%"></div></div><div class="cp-val">8.0</div><div class="cp-tag g">Ready</div></div>
+              <div class="cp-row" onclick="switchPanel('profile')"><div><div class="cp-pn">Ferreira, J.</div><div class="cp-pos">Middle Blocker</div></div><div class="cp-mb"><div class="cp-mf" style="width:72%"></div></div><div class="cp-val">7.2</div><div class="cp-tag g">Ready</div></div>
+              <div class="cp-row" onclick="switchPanel('profile')"><div><div class="cp-pn">Berger, S.</div><div class="cp-pos">Libero</div></div><div class="cp-mb"><div class="cp-mf" style="width:54%"></div></div><div class="cp-val">5.4</div><div class="cp-tag a">Monitor</div></div>
+              <div class="cp-row" onclick="switchPanel('profile')"><div><div class="cp-pn">Okafor, D.</div><div class="cp-pos">Opposite</div></div><div class="cp-mb"><div class="cp-mf" style="width:35%"></div></div><div class="cp-val">3.5</div><div class="cp-tag a">Rest</div></div>
+            </div>
+          </div>
+          <div class="cp-panel" id="panel-profile">
+            <div class="pp-hdr"><div class="pp-av">MK</div><div><div class="pp-name">Kovač, Marina</div><div class="pp-meta">Outside Hitter · #14 · Born 1999 · Croatian<br>Joined Sep 2023 · Contract until Jun 2026</div></div><div class="pp-st">Ready to train</div></div>
+            <div class="pp-grid">
+              <div class="pp-card"><div class="pp-cl">Season Stats</div><div class="pp-sr"><span class="pp-sk">Kill %</span><span class="pp-sv">63.4%</span></div><div class="pp-sr"><span class="pp-sk">Block success</span><span class="pp-sv">41.2%</span></div><div class="pp-sr"><span class="pp-sk">Reception acc.</span><span class="pp-sv">78.1%</span></div><div class="pp-sr"><span class="pp-sk">Errors / set</span><span class="pp-sv">1.4</span></div></div>
+              <div class="pp-card"><div class="pp-cl">This Week</div><div class="pp-sr"><span class="pp-sk">Avg readiness</span><span class="pp-sv">8.6</span></div><div class="pp-sr"><span class="pp-sk">Sessions</span><span class="pp-sv">4 / 4</span></div><div class="pp-sr"><span class="pp-sk">Sleep avg</span><span class="pp-sv">7.4h</span></div><div class="pp-sr"><span class="pp-sk">Injury flags</span><span class="pp-sv">None</span></div></div>
+            </div>
+            <div class="pp-note"><strong>Coach note (Mar 12):</strong> Strong leadership in set 3. Reception improving since Jan drill focus — consider for vice-captain next season.</div>
+          </div>
+          <div class="cp-panel" id="panel-health">
+            <div class="cp-hdr" style="margin-bottom:13px;"><div><div class="cp-title">Health & Medical Log</div><div class="cp-sub">All sections · Season 2025/26</div></div><div class="cp-badge">Medical staff gated</div></div>
+            <div class="hl-rows">
+              <div class="hl-row hdr"><div class="hl-c">Player</div><div class="hl-c">Injury / Note</div><div class="hl-c">Status</div><div class="hl-c">Flag</div></div>
+              <div class="hl-row"><div class="hl-c nm">Okafor, D.</div><div class="hl-c inj">Left ankle sprain — Grade I</div><div class="hl-b mn">Monitoring</div><div class="hl-flag">Clear</div></div>
+              <div class="hl-row"><div class="hl-c nm">Berger, S.</div><div class="hl-c inj">Fatigue — sleep disruption noted</div><div class="hl-b mn">Monitoring</div><div class="hl-flag">Clear</div></div>
+              <div class="hl-row"><div class="hl-c nm">Ferreira, J.</div><div class="hl-c inj">Right shoulder — cleared Feb 28</div><div class="hl-b cl">Cleared</div><div class="hl-flag">Clear</div></div>
+              <div class="hl-row"><div class="hl-c nm">Nowak, P.</div><div class="hl-c inj">Prescribed ibuprofen — 400mg</div><div class="hl-b ac">Active</div><div class="hl-flag fl">⚠ Review</div></div>
+              <div class="hl-row"><div class="hl-c nm">Kovač, M.</div><div class="hl-c inj">No active issues</div><div class="hl-b cl">Cleared</div><div class="hl-flag">Clear</div></div>
+            </div>
+          </div>
+          <div class="cp-panel" id="panel-practice">
+            <div class="cp-hdr" style="margin-bottom:13px;"><div><div class="cp-title">Practice Plan</div><div class="cp-sub">Friday 27 Mar · Women's Senior · 90 min</div></div><div class="cp-badge">Berger on reduced load</div></div>
+            <div class="pr-block"><div class="pr-bh"><div class="pr-bt">Warm-Up & Activation</div><div class="pr-bm">15 min</div></div><div class="pr-drills"><div class="pr-drill"><div><div class="pr-dn">Dynamic stretch circuit</div><div class="pr-df">Full squad</div></div><div class="pr-dtype">Fitness</div><div class="pr-dt">8 min</div></div><div class="pr-drill"><div><div class="pr-dn">Passing triangle</div><div class="pr-df">Ball control</div></div><div class="pr-dtype">Technical</div><div class="pr-dt">7 min</div></div></div></div>
+            <div class="pr-block"><div class="pr-bh"><div class="pr-bt">Serve & Reception Focus</div><div class="pr-bm">35 min</div></div><div class="pr-drills"><div class="pr-drill"><div><div class="pr-dn">Float serve pressure drill</div><div class="pr-df">Reception accuracy</div></div><div class="pr-dtype">Technical</div><div class="pr-dt">15 min</div></div><div class="pr-drill"><div><div class="pr-dn">3v3 serve-receive game</div><div class="pr-df">Game pressure</div></div><div class="pr-dtype">Tactical</div><div class="pr-dt">20 min</div></div></div></div>
+            <div class="pr-block"><div class="pr-bh"><div class="pr-bt">Scrimmage — 6v6</div><div class="pr-bm">30 min</div></div><div class="pr-drills"><div class="pr-drill"><div><div class="pr-dn">Full rotation scrimmage</div><div class="pr-df">Match simulation</div></div><div class="pr-dtype">Match</div><div class="pr-dt">30 min</div></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <div class="section">
+    <div class="sec-label">Core Features</div>
+    <h2 class="sec-title">Everything.<br>In one place.</h2>
+    <div class="feat-grid" style="margin-top:40px;">
+      <div class="feat-card"><div class="feat-n">F-01</div><div class="feat-title">Player & Team CRM</div><div class="feat-desc">Structured, searchable player records — stats history, training goals, coach notes, positional profile. The knowledge that stays with the club. Everything a new coach needs, on day one.</div></div>
+      <div class="feat-card"><div class="feat-n">F-02</div><div class="feat-title">Health, Medical & Anti-Doping</div><div class="feat-desc">Injury history, recovery timelines, return-to-play status. Supplement and medication logs with anti-doping compliance flags. Role-gated — only medical staff see sensitive records.</div></div>
+      <div class="feat-card"><div class="feat-n">F-03</div><div class="feat-title">Performance Dashboard</div><div class="feat-desc">Team and player trend visualisation — kill %, block success, reception accuracy, errors per set. Filterable by match, player, date. Correlated with self-reported wellness data.</div></div>
+      <div class="feat-card"><div class="feat-n">F-04</div><div class="feat-title">Strategy Board & Practice Planning</div><div class="feat-desc">Interactive court diagram for rotations and formations. Session builder with drill library. Plan, log, and track training load — all connected to player records.</div></div>
+    </div>
+  </div>
+
+  <!-- HOW PILOT WORKS -->
+  <div class="section">
+    <div class="sec-label">How the Pilot Works</div>
+    <h2 class="sec-title">What you're<br>signing up for.</h2>
+    <div class="pilot-steps" style="margin-top:40px;">
+      <div class="ps"><div class="ps-n">01</div><div class="ps-title">You apply</div><div class="ps-body">Fill in the form — club name, your name, a couple of sentences about your setup. We'll be in touch within a week.</div><div class="ps-time">Day 1</div></div>
+      <div class="ps"><div class="ps-n">02</div><div class="ps-title">Requirements call</div><div class="ps-body">One 45-minute call to understand your club's structure and what you need. We build around your real workflow.</div><div class="ps-time">Week 1–2</div></div>
+      <div class="ps"><div class="ps-n">03</div><div class="ps-title">On-site onboarding</div><div class="ps-body">The founder comes to you. Players and staff onboarded in person. We stay until the daily check-in habit is established.</div><div class="ps-time">Month 2–3</div></div>
+      <div class="ps"><div class="ps-n">04</div><div class="ps-title">Live & iterated</div><div class="ps-body">Weekly check-ins for the first month, then monthly. Direct feedback, direct builds. You're a co-designer, not a user.</div><div class="ps-time">Months 3–12</div></div>
+    </div>
+  </div>
+
+  <!-- CTA FORM -->
+  <div class="section" id="pilot-form">
+    <div class="cta-grid">
+      <div>
+        <div class="cta-eyebrow">Apply Now</div>
+        <h2 class="cta-title">Become a<br>founding club.</h2>
+        <p class="cta-body">One pilot club — multi-section, serious about data. The founder comes on-site personally. No cost, no contract.</p>
+        <form class="cta-form" onsubmit="handleSubmit(event)">
+          <input type="hidden" name="access_key" value="0b7c3814-a049-4329-9179-ada6eea86255">
+          <input type="hidden" name="subject" value="AVC Pilot Application">
+          <input type="checkbox" name="botcheck" style="display:none;">
+          <div class="form-r2"><input type="text" name="club_name" class="f-in" placeholder="Club name" required><input type="text" name="contact_name" class="f-in" placeholder="Your name" required></div>
+          <input type="email" name="email" class="f-in" placeholder="Email address" required>
+          <button type="submit" class="f-btn" id="form-btn">Send Application</button>
+          <p class="f-note" id="form-msg"></p>
+        </form>
+      </div>
+      <div class="cta-perks">
+        <div class="perk"><div class="perk-check">✓</div><div><div class="perk-title">Free for the full pilot</div><div class="perk-desc">No cost, no subscription. We need real clubs with real data.</div></div></div>
+        <div class="perk"><div class="perk-check">✓</div><div><div class="perk-title">On-site onboarding</div><div class="perk-desc">The founder comes to you personally. Not a Zoom call and a PDF.</div></div></div>
+        <div class="perk"><div class="perk-check">✓</div><div><div class="perk-title">Direct product input</div><div class="perk-desc">Your workflows shape what gets built. Direct line to the developer.</div></div></div>
+        <div class="perk"><div class="perk-check">✓</div><div><div class="perk-title">Full team coverage</div><div class="perk-desc">Youth, men's, women's — from day one. No per-squad fees.</div></div></div>
+        <div class="perk"><div class="perk-check">✓</div><div><div class="perk-title">Your data, always</div><div class="perk-desc">Open source. Full export at any time. No vendor lock-in, ever.</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <div class="pf-logo" onclick="nav('home')"><svg viewBox="0 0 28 28" fill="none"><polygon points="2,24 14,4 26,24 14,18" fill="white"/><rect x="2" y="15.5" width="24" height="2.5" fill="#080808"/></svg><span class="pf-wm">AVC</span></div>
+    <span class="pf-note">A Virtual Coach · Open Source</span>
+    <span class="pf-note">© 2026 Alexander Vainilovich</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     PAGE: FOR PLAYERS
+════════════════════════════════════════════════ -->
+<div class="page" id="page-players">
+  <div class="section">
+    <div class="sec-label">For Players</div>
+    <h2 class="sec-title">60 seconds.<br>Before every session.</h2>
+    <p class="sec-sub">The player portal runs on any phone — no app install. Four sliders, one question, done. Then your personal dashboard: stats, coach note, medical status, drill suggestions.</p>
+    <div class="player-wrap" style="margin-top:48px;">
+      <div class="player-intro">
+        <p>The check-in is four sliders and a button. <strong>Under 60 seconds, every time.</strong> The simplicity is intentional — if it feels like homework, players stop doing it and the whole system falls apart.</p>
+        <p>After submitting, players land on a personal home screen — not an empty confirmation page. Their own stats, a note the coach has chosen to share, medical status from the physio, and two drill suggestions based on their development areas.</p>
+        <p>Works on any phone browser. No download. No account creation beyond the first login. Walk through the full flow using the prototype →</p>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div class="phone-frame">
+          <div class="phone-notch"><div class="phone-nb"></div></div>
+          <div class="phone-body">
+            <div class="pf-greet">Hey, Marina 👋</div>
+            <div class="pf-sub">Quick check-in before training today</div>
+            <div class="pf-progress"><div class="pf-step done"></div><div class="pf-step"></div><div class="pf-step"></div></div>
+            <div class="pf-screen active" id="pf-s1">
+              <div class="pf-lbl">How are you feeling?</div>
+              <div class="pf-sliders">
+                <div><div class="pf-sh"><span class="pf-sn">Energy</span><span class="pf-sv" id="ve">7</span></div><input type="range" min="1" max="10" value="7" oninput="document.getElementById('ve').textContent=this.value"></div>
+                <div><div class="pf-sh"><span class="pf-sn">Sleep quality</span><span class="pf-sv" id="vs">8</span></div><input type="range" min="1" max="10" value="8" oninput="document.getElementById('vs').textContent=this.value"></div>
+                <div><div class="pf-sh"><span class="pf-sn">Mood</span><span class="pf-sv" id="vm">8</span></div><input type="range" min="1" max="10" value="8" oninput="document.getElementById('vm').textContent=this.value"></div>
+                <div><div class="pf-sh"><span class="pf-sn">Muscle soreness</span><span class="pf-sv" id="vso">4</span></div><input type="range" min="1" max="10" value="4" oninput="document.getElementById('vso').textContent=this.value"></div>
+              </div>
+              <button class="pf-btn" onclick="pfNext(2)">Next →</button>
+            </div>
+            <div class="pf-screen" id="pf-s2">
+              <div class="pf-lbl">Any physical concerns today?</div>
+              <div class="pf-choices">
+                <div class="pf-choice sel" onclick="selChoice(this)">All good — no issues</div>
+                <div class="pf-choice" onclick="selChoice(this)">Minor soreness / stiffness</div>
+                <div class="pf-choice" onclick="selChoice(this)">Something I want to flag</div>
+                <div class="pf-choice" onclick="selChoice(this)">Existing injury acting up</div>
+              </div>
+              <button class="pf-btn" onclick="pfNext(3)">Submit check-in</button>
+              <button class="pf-btn sec" onclick="pfNext(1)">← Back</button>
+            </div>
+            <div class="pf-screen" id="pf-s3">
+              <div class="pf-done-icon">✓</div>
+              <div class="pf-done-title">Checked in.</div>
+              <div class="pf-done-sub">Readiness logged. Your coach can see it now.</div>
+              <button class="pf-btn" style="margin-top:14px;" onclick="pfNext(4)">View my dashboard →</button>
+              <button class="pf-btn sec" onclick="pfNext(1)">Start over</button>
+            </div>
+            <div class="pf-screen" id="pf-s4">
+              <div class="ph-greet">Marina · Today</div>
+              <div class="ph-ready"><div class="ph-rl">Your readiness today</div><div class="ph-rn">7.8</div><div class="ph-rb"><div class="ph-rf" style="width:78%"></div></div></div>
+              <div class="ph-card"><div class="ph-ct"><div class="ph-cl">My Stats</div><div class="ph-cs">This season</div></div><div class="ph-sr"><span class="ph-sk">Kill %</span><span class="ph-sv">63.4%</span></div><div class="ph-sr"><span class="ph-sk">Reception acc.</span><span class="ph-sv">78.1%</span></div><div class="ph-sr"><span class="ph-sk">Errors / set</span><span class="ph-sv">1.4</span></div></div>
+              <div class="ph-card"><div class="ph-ct"><div class="ph-cl">Coach Note</div><div class="ph-cs">Mar 12</div></div><div class="ph-note">"Strong leadership in set 3. Reception improving — keep the float serve focus this week."</div></div>
+              <div class="ph-card"><div class="ph-ct"><div class="ph-cl">Medical Status</div><div class="ph-cs">From physio · Mar 26</div></div><div class="ph-st"><div class="ph-dot ok"></div><div class="ph-stxt">Cleared to train fully. No restrictions today.</div></div></div>
+              <div class="ph-card"><div class="ph-ct"><div class="ph-cl">Drills for You</div><div class="ph-cs">Based on your stats</div></div><div class="ph-drill"><div class="ph-dn">Float serve — shadow reps</div><div class="ph-df">Reception · 10 min</div></div><div class="ph-drill"><div class="ph-dn">Wall block timing</div><div class="ph-df">Block success · 8 min</div></div></div>
+              <button class="pf-btn sec" style="margin-top:3px;" onclick="pfNext(1)">New check-in</button>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:9px;color:var(--muted);text-align:center;">Player portal · Full check-in flow</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <div class="pf-logo" onclick="nav('home')"><svg viewBox="0 0 28 28" fill="none"><polygon points="2,24 14,4 26,24 14,18" fill="white"/><rect x="2" y="15.5" width="24" height="2.5" fill="#080808"/></svg><span class="pf-wm">AVC</span></div>
+    <span class="pf-note">A Virtual Coach · Open Source</span>
+    <span class="pf-note">© 2026 Alexander Vainilovich</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     PAGE: NATIONAL TEAMS
+════════════════════════════════════════════════ -->
+<div class="page" id="page-national">
+  <div class="section">
+    <div class="sec-label">For Federations & National Teams</div>
+    <h2 class="sec-title">The player arrives.<br>The data arrives with them.</h2>
+    <p class="sec-sub">A national coach calls up 14 players from 14 different clubs. <strong>None of that information normally travels with the player.</strong> AVC changes that. Use the tabs to explore each perspective.</p>
+
+    <div class="nt-interface" style="margin-top:40px;">
+      <div class="nt-tabbar">
+        <div class="nt-tab active" data-nt="club"><div class="nt-tab-dot"></div>Club View</div>
+        <div class="nt-tab" data-nt="callup"><div class="nt-tab-dot"></div>National Team Call-Up</div>
+        <div class="nt-tab" data-nt="federation"><div class="nt-tab-dot"></div>Federation Overview</div>
+        <div class="nt-tab" data-nt="handoff"><div class="nt-tab-dot"></div>Player Handoff Flow</div>
+      </div>
+      <div class="nt-panels">
+
+        <!-- Club View -->
+        <div class="nt-panel active" id="nt-club">
+          <div class="nt-cv">
+            <div>
+              <div class="nt-cv-hdr">VC Northgate — Women's Senior</div>
+              <div class="nt-cv-sub">Head Coach view · Training day · 14 players</div>
+              <div class="nt-mkpis"><div class="nt-mk"><div class="nt-mkn">7.8</div><div class="nt-mkl">Avg readiness today</div></div><div class="nt-mk"><div class="nt-mkn">2</div><div class="nt-mkl">Players to monitor</div></div><div class="nt-mk"><div class="nt-mkn">0</div><div class="nt-mkl">Open injury flags</div></div><div class="nt-mk"><div class="nt-mkn">61%</div><div class="nt-mkl">Kill % this week</div></div></div>
+              <div class="nt-squad">
+                <div class="nt-sr"><div><div class="nt-pn">Kovač, M.</div><div class="nt-pos">Outside Hitter</div></div><div class="nt-val">9.2</div><div class="nt-stag g">Ready</div></div>
+                <div class="nt-sr"><div><div class="nt-pn">Lemos, T.</div><div class="nt-pos">Setter</div></div><div class="nt-val">8.0</div><div class="nt-stag g">Ready</div></div>
+                <div class="nt-sr"><div><div class="nt-pn">Berger, S.</div><div class="nt-pos">Libero</div></div><div class="nt-val">5.4</div><div class="nt-stag a">Monitor</div></div>
+                <div class="nt-sr"><div><div class="nt-pn">Okafor, D.</div><div class="nt-pos">Opposite</div></div><div class="nt-val">3.5</div><div class="nt-stag a">Rest</div></div>
+              </div>
+            </div>
+            <div>
+              <div class="nt-export-box" style="margin-bottom:12px;">
+                <div class="nt-export-lbl">Call-up packages — ready to export</div>
+                <div class="nt-ep"><div class="nt-epn">Kovač, M.</div><button class="nt-epbtn">Export PDF + JSON</button></div>
+                <div class="nt-ep"><div class="nt-epn">Lemos, T.</div><button class="nt-epbtn">Export PDF + JSON</button></div>
+                <div class="nt-ep"><div class="nt-epn">Ferreira, J.</div><button class="nt-epbtn">Export PDF + JSON</button></div>
+              </div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.7;">Each export contains full injury history, readiness trends, training load, medication flags and coach notes — ready for the national staff on day one of camp.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Call-Up -->
+        <div class="nt-panel" id="nt-callup">
+          <div class="cu-hdr"><div><div class="cu-title">March 2026 Call-Up Squad</div><div class="cu-sub">14 players · 8 clubs · AVC data available: 9 of 14</div></div><button class="cu-ebtn">Export all →</button></div>
+          <div class="cu-rows">
+            <div class="cu-phdr"><span>Player</span><span style="text-align:center">Load</span><span style="text-align:center">Status</span><span style="text-align:right">Flag</span></div>
+            <div class="cu-prow"><div><div class="cu-pn">Kovač, M.</div><div class="cu-pc">VC Northgate · AVC</div></div><div class="cu-load hi">High</div><div class="cu-status ok">Cleared</div><div class="cu-flag">Clear</div></div>
+            <div class="cu-prow"><div><div class="cu-pn">Berger, S.</div><div class="cu-pc">VC Northgate · AVC</div></div><div class="cu-load md">Med</div><div class="cu-status mo">Monitor</div><div class="cu-flag fl">⚠ Fatigue</div></div>
+            <div class="cu-prow"><div><div class="cu-pn">Mwangi, A.</div><div class="cu-pc">SC Meridian · AVC</div></div><div class="cu-load hi">High</div><div class="cu-status ok">Cleared</div><div class="cu-flag">Clear</div></div>
+            <div class="cu-prow nd"><div><div class="cu-pn">Petrov, D.</div><div class="cu-pc">Dynamo West · No AVC</div></div><div class="cu-load na">—</div><div class="cu-status uk">Unknown</div><div class="cu-flag">No data</div></div>
+            <div class="cu-prow nd"><div><div class="cu-pn">Osei, R.</div><div class="cu-pc">FC Sever · No AVC</div></div><div class="cu-load na">—</div><div class="cu-status uk">Unknown</div><div class="cu-flag">No data</div></div>
+          </div>
+          <div class="cu-kpis"><div class="cu-kpi"><div class="cu-kn">9 / 14</div><div class="cu-kl">Players with full AVC data</div></div><div class="cu-kpi"><div class="cu-kn">1</div><div class="cu-kl">Active concern flags</div></div><div class="cu-kpi"><div class="cu-kn">5</div><div class="cu-kl">Players — no data from non-AVC clubs</div></div></div>
+        </div>
+
+        <!-- Federation -->
+        <div class="nt-panel" id="nt-federation">
+          <div style="background:var(--s2);border:1px solid var(--border);padding:16px 20px;margin-bottom:14px;border-left:2px solid var(--white);">
+            <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--white);margin-bottom:6px;">The network effect</div>
+            <div style="font-size:11.5px;color:var(--dim);line-height:1.8;">Every club that joins AVC makes the national team picture more complete. A federation with 3 clubs on AVC sees partial data. A federation with 12 clubs sees the full picture — injury history, readiness trends, and medication flags — for almost every player in the national pool, before camp even starts. That's a direct incentive for federations to encourage adoption across their member clubs.</div>
+          </div>
+          <div class="fed-g">
+            <div class="fed-block">
+              <div class="fed-bl">Member clubs on AVC</div>
+              <div class="fed-clubs">
+                <div class="fed-cr"><div class="fed-cn">VC Northgate</div><div class="fed-cp">14</div><div class="fed-cs on">Active</div></div>
+                <div class="fed-cr"><div class="fed-cn">SC Meridian</div><div class="fed-cp">12</div><div class="fed-cs on">Active</div></div>
+                <div class="fed-cr"><div class="fed-cn">Atlético Volare</div><div class="fed-cp">16</div><div class="fed-cs on">Active</div></div>
+                <div class="fed-cr"><div class="fed-cn">Dynamo West</div><div class="fed-cp">—</div><div class="fed-cs off">Not on AVC</div></div>
+                <div class="fed-cr"><div class="fed-cn">FC Sever</div><div class="fed-cp">—</div><div class="fed-cs off">Not on AVC</div></div>
+              </div>
+            </div>
+            <div class="fed-block">
+              <div class="fed-bl">What a national coach sees on day one</div>
+              <div class="fed-wrows">
+                <div class="fed-wr"><span class="fed-wk">Clubs on AVC → national data coverage</span><span class="fed-wv">your data</span></div>
+                <div class="fed-wr"><span class="fed-wk">Player profiles fully available at camp</span><span class="fed-wv">your data</span></div>
+                <div class="fed-wr"><span class="fed-wk">Injury flags visible before arrival</span><span class="fed-wv">your data</span></div>
+                <div class="fed-wr"><span class="fed-wk">Active medication flags for review</span><span class="fed-wv">your data</span></div>
+              </div>
+              <div class="fed-note">Numbers populate from your real member clubs. The more clubs on AVC, the more complete the national picture.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Handoff -->
+        <div class="nt-panel" id="nt-handoff">
+          <div class="hf-flow">
+            <div class="hfs"><div class="hfs-n">01</div><div class="hfs-title">Club logs daily</div><div class="hfs-desc">Players self-report. Coaches log sessions, injuries, and notes. Data builds over months and seasons.</div><div class="hfs-tag">Ongoing</div></div>
+            <div class="hfs act"><div class="hfs-n">02</div><div class="hfs-title">Call-up announced</div><div class="hfs-desc">Club coach generates a call-up package — one click exports the full player profile as PDF + JSON.</div><div class="hfs-tag">Day 0</div></div>
+            <div class="hfs"><div class="hfs-n">03</div><div class="hfs-title">National staff receives</div><div class="hfs-desc">National coach and physio import the profile. Full injury history, readiness trends, and medication flags visible before camp starts.</div><div class="hfs-tag">Day 1</div></div>
+            <div class="hfs"><div class="hfs-n">04</div><div class="hfs-title">Player returns</div><div class="hfs-desc">Notes from camp — load, any new injuries, observations — export back to the club. Both sides stay informed.</div><div class="hfs-tag">After camp</div></div>
+          </div>
+          <div class="hf-preview">
+            <div class="hf-pl">Sample call-up package — Kovač, Marina · VC Northgate</div>
+            <div class="hf-fields">
+              <div class="hf-field"><div class="hf-fl">Kill %</div><div class="hf-fv">63.4%</div></div>
+              <div class="hf-field"><div class="hf-fl">Avg readiness</div><div class="hf-fv">8.6 / 10</div></div>
+              <div class="hf-field"><div class="hf-fl">Injury flags</div><div class="hf-fv">None active</div></div>
+              <div class="hf-field"><div class="hf-fl">Medication</div><div class="hf-fv">None flagged</div></div>
+              <div class="hf-field"><div class="hf-fl">Training load</div><div class="hf-fv">High · 4 sessions/wk</div></div>
+              <div class="hf-field"><div class="hf-fl">Coach note</div><div class="hf-fv">Vice-captain candidate</div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <div class="pf-logo" onclick="nav('home')"><svg viewBox="0 0 28 28" fill="none"><polygon points="2,24 14,4 26,24 14,18" fill="white"/><rect x="2" y="15.5" width="24" height="2.5" fill="#080808"/></svg><span class="pf-wm">AVC</span></div>
+    <span class="pf-note">A Virtual Coach · Open Source</span>
+    <span class="pf-note">© 2026 Alexander Vainilovich</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     PAGE: OPEN SOURCE
+════════════════════════════════════════════════ -->
+<div class="page" id="page-opensource">
+  <div class="section">
+    <div class="sec-label">Open Source</div>
+    <h2 class="sec-title">No lock-in.<br>Ever.</h2>
+    <p class="sec-sub">AVC is open source by design, not as an afterthought. Your data belongs to your club — always exportable, always readable, no dependency on AVC's infrastructure.</p>
+    <div class="os-grid" style="margin-top:48px;">
+      <div>
+        <div class="os-pillars">
+          <div class="os-pillar"><div class="os-pn">01</div><div class="os-pt">Full data ownership</div><div class="os-pd">Export everything — JSON or PDF — at any time. Your records belong to your club, not to AVC.</div></div>
+          <div class="os-pillar"><div class="os-pn">02</div><div class="os-pt">No pricing surprises</div><div class="os-pd">The core platform is free and open source. No per-seat fees, no feature gates on the essentials.</div></div>
+          <div class="os-pillar"><div class="os-pn">03</div><div class="os-pt">Self-hostable</div><div class="os-pd">Clubs or federations can host their own instance. No dependence on AVC's infrastructure required.</div></div>
+          <div class="os-pillar"><div class="os-pn">04</div><div class="os-pt">Community-driven</div><div class="os-pd">All code on GitHub. Contributions welcome. The platform improves with every club that uses it.</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="os-text">
+          <p><strong>Why does open source matter for a coaching tool?</strong>Most sports software locks your data in proprietary formats and charges more every year to access it. When they shut down — and some do — you lose everything.</p>
+          <p>AVC is built differently. The full codebase is published under an open licence. Data exports are human-readable JSON and PDF. If AVC ever disappears, your records survive independently.</p>
+          <p>For clubs without large budgets, open source also means zero cost to adopt. No procurement process, no annual contract negotiation. A link and a setup call.</p>
+        </div>
+        <div class="os-stack">
+          <div class="os-sr"><div class="os-sk">Frontend</div><div class="os-sv">React — browser-native, no install required</div></div>
+          <div class="os-sr"><div class="os-sk">Backend</div><div class="os-sv">Python / FastAPI — lightweight, well-documented</div></div>
+          <div class="os-sr"><div class="os-sk">Database</div><div class="os-sv">PostgreSQL — industry standard, fully exportable</div></div>
+          <div class="os-sr"><div class="os-sk">Hosting</div><div class="os-sv">Render + Supabase — or self-hosted on any server</div></div>
+          <div class="os-sr"><div class="os-sk">Licence</div><div class="os-sv">Open source — full codebase on GitHub</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="border-top:1px solid var(--border);padding-top:60px;padding-bottom:60px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:24px;">
+      <div>
+        <div class="sec-label">No lock-in means no risk</div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:clamp(20px,2.5vw,36px);font-weight:800;color:var(--white);line-height:1.1;letter-spacing:-.02em;">Try it. Own your data.<br>Leave any time.</h3>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;">
+        <div class="btn-p" onclick="nav('clubs');setTimeout(()=>document.getElementById('pilot-form').scrollIntoView({behavior:'smooth'}),100)">Apply for Pilot</div>
+        <div class="btn-g" onclick="nav('faq')">Read the FAQ</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <div class="pf-logo" onclick="nav('home')"><svg viewBox="0 0 28 28" fill="none"><polygon points="2,24 14,4 26,24 14,18" fill="white"/><rect x="2" y="15.5" width="24" height="2.5" fill="#080808"/></svg><span class="pf-wm">AVC</span></div>
+    <span class="pf-note">A Virtual Coach · Open Source</span>
+    <span class="pf-note">© 2026 Alexander Vainilovich</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════
+     PAGE: FAQ
+════════════════════════════════════════════════ -->
+<div class="page" id="page-faq">
+  <div class="section">
+    <div class="sec-label">FAQ</div>
+    <h2 class="sec-title">Questions clubs<br>always ask.</h2>
+    <div class="faq-grid" style="margin-top:48px;">
+      <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Do players need to download an app?<span class="faq-arr">+</span></div><div class="faq-a"><div class="faq-ai">No. The player portal is a web page that works on any phone browser — Safari, Chrome, anything. Players bookmark the link or you pin it in your team WhatsApp. No app store, no installation, no update prompts.</div></div></div>
+      <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Is this GDPR compliant?<span class="faq-arr">+</span></div><div class="faq-a"><div class="faq-ai">AVC is designed with GDPR principles from the ground up. Health and medical data is role-gated and encrypted at rest. Players consent to data logging when they register. Full data export and deletion is available at any time.</div></div></div>
+      <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">What happens to our data if AVC shuts down?<span class="faq-arr">+</span></div><div class="faq-a"><div class="faq-ai">Because AVC is open source and built on standard technologies (PostgreSQL, React, Python), your data never becomes inaccessible. Export everything as JSON or PDF at any time. Clubs with technical staff can also self-host the entire platform — no dependency on AVC's servers.</div></div></div>
+      <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">How long does setup take?<span class="faq-arr">+</span></div><div class="faq-a"><div class="faq-ai">The platform is live within 48 hours of the requirements call. Onboarding staff and creating player profiles takes one session — typically two hours on-site. Most clubs have their full squad checking in daily within the first week.</div></div></div>
+      <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Can coaches see all sections — youth, men's, women's?<span class="faq-arr">+</span></div><div class="faq-a"><div class="faq-ai">Yes. AVC supports multi-section clubs with role-based access. The head coach of each section sees their squad. A club director sees all sections. Medical staff see health records across all sections. Access is configured per person during onboarding.</div></div></div>
+      <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Will AVC give medical advice to players?<span class="faq-arr">+</span></div><div class="faq-a"><div class="faq-ai">No. AVC is a coaching and management tool, not a medical platform. Status updates visible to players — like "cleared to train" or "see physio before Thursday" — are written by your medical staff, not generated by the platform. AVC never produces automated medical recommendations.</div></div></div>
+      <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Is there a cost after the pilot?<span class="faq-arr">+</span></div><div class="faq-a"><div class="faq-ai">The pilot is completely free. After the pilot period, hosting costs approximately €75/month for a full club. Pilot clubs get preferential terms. The core platform remains open source and self-hostable at no cost.</div></div></div>
+      <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">What if players don't bother checking in?<span class="faq-arr">+</span></div><div class="faq-a"><div class="faq-ai">The check-in takes under 60 seconds — four sliders and one question. Coaches see a "who hasn't checked in today" view and can follow up before training. On-site onboarding in the first two weeks is specifically focused on making it habitual, not just taught once and forgotten.</div></div></div>
+    </div>
+  </div>
+
+  <div class="section" style="border-top:1px solid var(--border);padding-top:60px;padding-bottom:60px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:24px;">
+      <div>
+        <div class="sec-label">Still have questions?</div>
+        <h3 style="font-family:'Syne',sans-serif;font-size:clamp(20px,2.5vw,36px);font-weight:800;color:var(--white);line-height:1.1;letter-spacing:-.02em;">Apply and we'll answer<br>everything on a call.</h3>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;">
+        <div class="btn-p" onclick="nav('clubs');setTimeout(()=>document.getElementById('pilot-form').scrollIntoView({behavior:'smooth'}),100)">Apply for Pilot</div>
+        <div class="btn-g" onclick="nav('clubs')">See the product</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-footer">
+    <div class="pf-logo" onclick="nav('home')"><svg viewBox="0 0 28 28" fill="none"><polygon points="2,24 14,4 26,24 14,18" fill="white"/><rect x="2" y="15.5" width="24" height="2.5" fill="#080808"/></svg><span class="pf-wm">AVC</span></div>
+    <span class="pf-note">A Virtual Coach · Open Source</span>
+    <span class="pf-note">© 2026 Alexander Vainilovich</span>
+  </div>
+</div>
+
+</div><!-- end main-wrap -->
+
+<script>
+  // ── CURSOR ──
+  const cur=document.getElementById('cur'),curR=document.getElementById('curR');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px';});
+  (function a(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;curR.style.left=rx+'px';curR.style.top=ry+'px';requestAnimationFrame(a);})();
+
+  // ── ROUTER ──
+  const pageMap={home:'page-home',clubs:'page-clubs',players:'page-players',national:'page-national',opensource:'page-opensource',faq:'page-faq'};
+
+  function nav(id){
+    // hide all pages
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    // show target
+    const pg=document.getElementById(pageMap[id]);
+    if(pg){pg.classList.add('active');pg.scrollTop=0;window.scrollTo(0,0);}
+    // update nav active
+    document.querySelectorAll('.sn-link').forEach(l=>{
+      l.classList.toggle('active',l.dataset.page===id);
+    });
+    // update hash without scrolling
+    history.pushState({page:id},'','#'+id);
+    // close mobile nav
+    document.getElementById('sidenav').classList.remove('open');
+    document.getElementById('mobOverlay').classList.remove('open');
+  }
+
+  // Handle browser back/forward
+  window.addEventListener('popstate',e=>{
+    const id=(e.state&&e.state.page)||'home';
+    nav(id);
+  });
+
+  // Init from hash
+  (function(){
+    const hash=window.location.hash.replace('#','');
+    if(hash&&pageMap[hash]) nav(hash);
+    else nav('home');
+  })();
+
+  // ── MOBILE NAV ──
+  document.getElementById('mobHbg').addEventListener('click',()=>{
+    document.getElementById('sidenav').classList.toggle('open');
+    document.getElementById('mobOverlay').classList.toggle('open');
+  });
+  document.getElementById('mobOverlay').addEventListener('click',()=>{
+    document.getElementById('sidenav').classList.remove('open');
+    document.getElementById('mobOverlay').classList.remove('open');
+  });
+
+  // ── COACH TABS ──
+  function switchPanel(id){
+    document.querySelectorAll('.cp-panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.cp-nav').forEach(n=>n.classList.remove('active'));
+    const panel=document.getElementById('panel-'+id);
+    const navItem=document.querySelector('[data-panel="'+id+'"]');
+    if(panel) panel.classList.add('active');
+    if(navItem) navItem.classList.add('active');
+  }
+  document.querySelectorAll('.cp-nav').forEach(item=>{
+    item.addEventListener('click',()=>switchPanel(item.dataset.panel));
+  });
+
+  // ── NT TABS ──
+  document.querySelectorAll('.nt-tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      document.querySelectorAll('.nt-tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.nt-panel').forEach(p=>p.classList.remove('active'));
+      tab.classList.add('active');
+      const panel=document.getElementById('nt-'+tab.dataset.nt);
+      if(panel) panel.classList.add('active');
+    });
+  });
+
+  // ── PLAYER PROTO ──
+  function pfNext(s){
+    document.querySelectorAll('.pf-screen').forEach(x=>x.classList.remove('active'));
+    const sc=document.getElementById('pf-s'+s);
+    if(sc) sc.classList.add('active');
+    const steps=document.querySelectorAll('.pf-step');
+    if(s===1) steps.forEach((x,i)=>x.classList.toggle('done',i===0));
+    else if(s===2) steps.forEach((x,i)=>x.classList.toggle('done',i<1));
+    else steps.forEach(x=>x.classList.add('done'));
+    const pb=document.querySelector('.phone-body');
+    if(pb) pb.scrollTop=0;
+  }
+  function selChoice(el){
+    document.querySelectorAll('.pf-choice').forEach(c=>c.classList.remove('sel'));
+    el.classList.add('sel');
+  }
+
+  // ── FAQ ──
+  function toggleFaq(el){
+    const open=el.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));
+    if(!open) el.classList.add('open');
+  }
+
+  // ── FORM ──
+  async function handleSubmit(e){
+    e.preventDefault();
+    const form=e.target;
+    const btn=document.getElementById('form-btn');
+    const msg=document.getElementById('form-msg');
+    btn.disabled=true;
+    btn.textContent='Sending...';
+    msg.textContent='';
+    try{
+      const res=await fetch('https://api.web3forms.com/submit',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(Object.fromEntries(new FormData(form)))
+      });
+      const data=await res.json();
+      if(data.success){
+        msg.style.color='#4a9';
+        msg.textContent="Application received — we'll be in touch within a week.";
+        form.querySelectorAll('input:not([type=hidden]):not([type=checkbox])').forEach(i=>i.value='');
+      }else{
+        msg.style.color='#a74';
+        msg.textContent='Something went wrong — please try again or email directly.';
+      }
+    }catch(err){
+      msg.style.color='#a74';
+      msg.textContent='Connection error — please try again.';
+    }
+    btn.disabled=false;
+    btn.textContent='Send Application';
+  }
+</script>
+</body>
+</html>
